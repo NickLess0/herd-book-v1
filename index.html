@@ -1,0 +1,2109 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Herd Book</title>
+<meta name="description" content="Livestock records on your own device: ID tags, photos, family trees, statuses and vaccine reminders. Works without internet.">
+<meta name="theme-color" content="#1D5C45">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Herd Book">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-tap-highlight-color:transparent}
+img{max-width:100%}
+[hidden]{display:none!important}
+:root{
+  --bg:#EEF1EA; --surface:#FFFFFF; --surface-2:#F5F7F2; --ink:#17201B; --muted:#56615A;
+  --line:#D3DACF; --line-strong:#A9B4A5;
+  --primary:#1D5C45; --primary-ink:#FFFFFF; --primary-soft:#DDEDE4;
+  --tag:#F4C21B; --tag-ink:#1A1A12; --tag-edge:#C99A00;
+  --red:#B3261E; --red-soft:#FBE7E5;
+  --amber:#945000; --amber-soft:#FCEFD9;
+  --purple:#6B3FA0; --purple-soft:#EFE6F8;
+  --blue:#1C5DA8; --blue-soft:#E3EDF9;
+  --green:#1E7A4C; --green-soft:#E0F1E7;
+  --grey:#5F6661; --grey-soft:#E7EAE5;
+  --scrim:rgba(12,20,15,.5);
+  --shadow:0 1px 2px rgba(20,32,26,.08),0 3px 10px rgba(20,32,26,.06);
+  --num:"Avenir Next Condensed","Bahnschrift","Roboto Condensed",sans-serif-condensed,"Arial Narrow",system-ui,sans-serif;
+  --display:"Avenir Next Condensed","Bahnschrift","Roboto Condensed",sans-serif-condensed,"Arial Narrow",system-ui,sans-serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101512; --surface:#19201C; --surface-2:#1F2722; --ink:#EDF1EC; --muted:#A5B0A8;
+    --line:#2E3832; --line-strong:#4A574F;
+    --primary:#63C595; --primary-ink:#0B1A12; --primary-soft:#1C3328;
+    --tag:#F2C230; --tag-ink:#16140A; --tag-edge:#B8900F;
+    --red:#FF8F85; --red-soft:#3B1D1A; --amber:#F2B25E; --amber-soft:#3A2A12;
+    --purple:#C9A8F4; --purple-soft:#2D2240; --blue:#8FBAF3; --blue-soft:#172A42;
+    --green:#80D4A7; --green-soft:#16301F; --grey:#AFB7B1; --grey-soft:#2A302C;
+    --scrim:rgba(0,0,0,.62); --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101512; --surface:#19201C; --surface-2:#1F2722; --ink:#EDF1EC; --muted:#A5B0A8;
+  --line:#2E3832; --line-strong:#4A574F;
+  --primary:#63C595; --primary-ink:#0B1A12; --primary-soft:#1C3328;
+  --tag:#F2C230; --tag-ink:#16140A; --tag-edge:#B8900F;
+  --red:#FF8F85; --red-soft:#3B1D1A; --amber:#F2B25E; --amber-soft:#3A2A12;
+  --purple:#C9A8F4; --purple-soft:#2D2240; --blue:#8FBAF3; --blue-soft:#172A42;
+  --green:#80D4A7; --green-soft:#16301F; --grey:#AFB7B1; --grey-soft:#2A302C;
+  --scrim:rgba(0,0,0,.62); --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+html[lang="ar"]{
+  --display:system-ui,-apple-system,"SF Arabic","Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;
+  --body:system-ui,-apple-system,"SF Arabic","Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;
+}
+.tag,.tile-num,.input-tag{font-stretch:condensed}
+*{box-sizing:border-box}
+html{font-size:18px;-webkit-text-size-adjust:100%}
+html[data-size="l"]{font-size:20px}
+html[data-size="xl"]{font-size:23px}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.45}
+html[lang="ar"] body{line-height:1.6}
+html[lang="ar"] body *:not(.tag):not(.tile-num):not(.input-tag){letter-spacing:0!important}
+html[dir="rtl"] .flip{transform:scaleX(-1)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+h1,h2,h3{text-wrap:balance}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:44rem;margin:0 auto;padding-inline:16px;min-height:3.6rem;display:flex;align-items:center;gap:.4rem}
+.back{display:inline-flex;align-items:center;gap:.1rem;min-height:2.9rem;padding-block:0;padding-inline:.2rem .75rem;margin-inline-start:-.3rem;border-radius:.8rem;font-weight:700;color:var(--primary);background:transparent;border:0}
+.back svg{width:1.5rem;height:1.5rem}
+.top-title{font-family:var(--display);font-weight:700;font-size:1.55rem;letter-spacing:.01em;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+html[lang="ar"] .top-title{font-size:1.35rem}
+.brand{display:flex;align-items:center;gap:.55rem}
+.brand-mark{width:1.15rem;height:1.5rem;background:var(--tag);border:1px solid var(--tag-edge);border-radius:.35rem .35rem .55rem .55rem;position:relative;flex:none}
+.brand-mark::before{content:"";position:absolute;left:50%;top:.2rem;width:.34rem;height:.34rem;margin-left:-.17rem;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--tag-edge)}
+.top-action{flex:none}
+.lang-btn{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+
+.wrap{max-width:44rem;margin:0 auto;padding-inline:16px;padding-block:1rem calc(7rem + env(safe-area-inset-bottom,0px))}
+.banner{max-width:44rem;margin:.75rem auto 0;padding-inline:16px}
+.banner-in{display:flex;gap:.7rem;align-items:flex-start;padding:.8rem 1rem;border-radius:.9rem;background:var(--amber-soft);color:var(--ink);border:1px solid var(--line)}
+.banner-in.error{background:var(--red-soft)}
+.banner-in.info{background:var(--blue-soft);align-items:center;flex-wrap:wrap}
+.banner-in .btn{margin-inline-start:auto;flex:none}
+.notice h3{margin:0;font-size:1.05rem}
+.notice ol{margin:0;padding-inline-start:1.3rem;display:flex;flex-direction:column;gap:.3rem}
+.notice.warn{background:var(--amber-soft);border-style:solid;border-color:color-mix(in srgb,var(--amber) 35%,transparent)}
+
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar-in{max-width:44rem;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;min-height:4.3rem;background:none;border:0;color:var(--muted);font-size:.76rem;font-weight:700;padding:.35rem .1rem;line-height:1.15;text-align:center}
+.tab-ico{display:grid;place-items:center;width:3.3rem;height:2.05rem;border-radius:1.1rem}
+.tab svg{width:1.55rem;height:1.55rem}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"] .tab-ico{background:var(--primary-soft);color:var(--primary)}
+.tab-add .tab-ico{background:var(--primary);color:var(--primary-ink)}
+.tab-add[aria-current="page"] .tab-ico{background:var(--primary);color:var(--primary-ink)}
+
+/* ear tag */
+.tag{display:inline-flex;align-items:center;gap:.32em;background:var(--tag);color:var(--tag-ink);font-family:var(--num);font-weight:700;font-size:1.2rem;letter-spacing:.02em;line-height:1;padding:.26em .62em .26em .42em;border-radius:.4em .95em .95em .4em;border:1px solid var(--tag-edge);font-variant-numeric:tabular-nums;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;direction:ltr;unicode-bidi:isolate}
+.tag::before{content:"";width:.4em;height:.4em;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--tag-edge);flex:none}
+.tag-lg{font-size:2.3rem;padding:.2em .6em .2em .4em}
+.tag-sm{font-size:1.02rem}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:3.1rem;padding:.55rem 1.05rem;border-radius:.85rem;border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:700;text-align:center;text-decoration:none;line-height:1.2}
+.btn svg{width:1.3rem;height:1.3rem;flex:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.btn-danger{color:var(--red);border-color:var(--red);background:var(--surface)}
+.btn-danger-solid{background:var(--red);border-color:var(--red);color:#fff}
+.btn-block{width:100%}
+.btn-lg{min-height:3.6rem;font-size:1.08rem}
+.btn-sm{min-height:2.75rem;padding:.35rem .8rem;font-size:.92rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn-row{display:flex;flex-wrap:wrap;gap:.6rem}
+.btn-row .btn{flex:1 1 12rem}
+.link{background:none;border:0;padding:0 .15rem;min-height:2.75rem;color:var(--primary);font-weight:700;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{--c:var(--grey);--c-soft:var(--grey-soft);display:inline-flex;align-items:center;gap:.38rem;padding-block:.18rem;padding-inline:.5rem .62rem;border-radius:999px;font-size:.86rem;font-weight:700;background:var(--c-soft);color:var(--c);border:1px solid transparent;border-color:color-mix(in srgb,var(--c) 28%,transparent);line-height:1.3}
+.chip i{width:.58rem;height:.58rem;border-radius:50%;background:var(--c);flex:none}
+.c-red{--c:var(--red);--c-soft:var(--red-soft)}
+.c-amber{--c:var(--amber);--c-soft:var(--amber-soft)}
+.c-purple{--c:var(--purple);--c-soft:var(--purple-soft)}
+.c-blue{--c:var(--blue);--c-soft:var(--blue-soft)}
+.c-green{--c:var(--green);--c-soft:var(--green-soft)}
+.c-grey{--c:var(--grey);--c-soft:var(--grey-soft)}
+.dot{display:inline-block;width:.8rem;height:.8rem;border-radius:50%;background:var(--c);flex:none}
+
+/* home */
+.today{color:var(--muted);font-weight:700;margin:0 0 .6rem}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-top:1rem}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding:.85rem .95rem;text-align:start;display:flex;flex-direction:column;gap:.15rem;min-height:6.6rem}
+.tile-num{font-family:var(--num);font-weight:700;font-size:2.7rem;line-height:.95;font-variant-numeric:tabular-nums}
+.tile-label{font-weight:700}
+.tile-sub{color:var(--muted);font-size:.84rem;line-height:1.3}
+.tile.is-alert .tile-num,.tile.is-alert .tile-sub.strong{color:var(--red)}
+.tile.is-warn .tile-num{color:var(--amber)}
+.tile.is-alert{border-color:color-mix(in srgb,var(--red) 45%,var(--line))}
+.notice{display:flex;flex-direction:column;gap:.6rem;padding:.95rem 1rem;border-radius:1rem;background:var(--surface-2);border:1px dashed var(--line-strong);margin-top:1rem}
+.notice p{margin:0}
+
+.sec{display:flex;flex-direction:column;gap:.7rem;margin-top:1.8rem}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.sec-h h2{font-family:var(--display);font-weight:700;font-size:1.5rem;margin:0;letter-spacing:.01em;line-height:1.2}
+html[lang="ar"] .sec-h h2{font-size:1.3rem}
+.sec-h .count{color:var(--muted);font-weight:700;font-size:.95rem}
+.empty-note{color:var(--muted);margin:0;padding:.9rem 1rem;border:1px dashed var(--line-strong);border-radius:1rem}
+
+/* filters */
+.fchips{display:flex;gap:.45rem;overflow-x:auto;padding-bottom:.2rem;scrollbar-width:thin}
+.fchip{flex:none;display:inline-flex;align-items:center;gap:.4rem;min-height:2.75rem;padding:.3rem .95rem;border-radius:999px;border:2px solid var(--line-strong);background:var(--surface);font-weight:700}
+.fchip .n{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:400}
+.fchip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.fchip[aria-pressed="true"] .n{color:inherit;opacity:.8}
+.searchbox{position:relative}
+.searchbox svg{position:absolute;inset-inline-start:.85rem;top:50%;width:1.35rem;height:1.35rem;margin-top:-.675rem;color:var(--muted);pointer-events:none}
+.searchbox .input{padding-inline-start:2.7rem}
+.filter-row{display:grid;grid-template-columns:1fr;gap:.7rem}
+
+/* animal cards */
+.alist{display:flex;flex-direction:column;gap:.6rem}
+.acard{background:var(--surface);border:1px solid var(--line);border-radius:1rem;overflow:hidden}
+.acard.past{background:var(--surface-2)}
+.acard-main{display:grid;grid-template-columns:4.3rem minmax(0,1fr) auto;gap:.8rem;align-items:center;width:100%;padding:.7rem;background:none;border:0;text-align:start}
+.acard-main > svg{width:1.4rem;height:1.4rem;color:var(--muted)}
+.thumb{width:4.3rem;height:4.3rem;border-radius:.8rem;object-fit:cover;background:var(--surface-2);display:grid;place-items:center;color:var(--muted);overflow:hidden;border:1px solid var(--line);flex:none}
+.thumb svg{width:45%;height:45%}
+.thumb.sm{width:3rem;height:3rem;border-radius:.6rem}
+.acard-body{min-width:0;display:flex;flex-direction:column;gap:.28rem}
+.acard-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;min-width:0}
+.aname{font-weight:700;font-size:1.08rem;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:.9rem;line-height:1.35}
+.acard-note{font-size:.9rem;color:var(--ink);margin:0}
+.acard-kids{border-top:1px solid var(--line);padding:.5rem .7rem .6rem;display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;background:var(--surface-2)}
+.acard-kids .lbl-sm{margin-inline-end:.2rem}
+.kid{background:none;border:0;padding:.25rem .1rem;min-height:2.75rem;display:inline-flex;align-items:center}
+.kid .tag{font-size:1rem}
+.lbl-sm{font-size:.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.past-l{display:inline-block;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border:1px solid var(--line-strong);border-radius:.4rem;padding:0 .35rem}
+
+/* vaccine rows */
+.vlist{display:flex;flex-direction:column;gap:.55rem}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.6rem;background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding-block:.45rem;padding-inline:.85rem .6rem;text-align:start}
+.vrow-main{background:none;border:0;text-align:start;padding:.35rem 0;display:flex;flex-direction:column;gap:.22rem;min-width:0}
+.vrow-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.vname{font-weight:700}
+.due{font-weight:700;font-size:.92rem}
+.due.late{color:var(--red)}
+.due.soon{color:var(--amber)}
+.due.ok{color:var(--green)}
+.group-h{font-weight:700;margin:.6rem 0 0;display:flex;align-items:center;gap:.5rem}
+
+/* profile */
+.phead{display:grid;grid-template-columns:8rem minmax(0,1fr);gap:1rem;align-items:start}
+.photo-lg{width:8rem;height:8rem;border-radius:1rem;border:1px solid var(--line);background:var(--surface-2);padding:0;overflow:hidden;display:grid;place-items:center;color:var(--muted)}
+.photo-lg img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-lg .ph{display:flex;flex-direction:column;align-items:center;gap:.25rem;font-size:.85rem;font-weight:700}
+.photo-lg svg{width:2rem;height:2rem}
+.phead-b{display:flex;flex-direction:column;gap:.45rem;min-width:0}
+.pname{font-size:1.4rem;margin:0;line-height:1.25;overflow-wrap:anywhere}
+.pmeta{color:var(--muted);margin:0}
+@media (max-width:360px){.phead{grid-template-columns:1fr}.photo-lg{width:100%;height:12rem}}
+
+.subtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;background:var(--surface-2);border:1px solid var(--line);border-radius:1rem;padding:.25rem;margin-top:1.1rem;position:sticky;top:calc(env(safe-area-inset-top,0px) + 3.65rem);z-index:10}
+.subtab{min-height:3rem;border:0;border-radius:.78rem;background:transparent;font-weight:700;font-size:.9rem;color:var(--muted);padding:.2rem .15rem;line-height:1.15}
+.subtab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);outline:2px solid var(--primary);outline-offset:-2px}
+.panel{display:flex;flex-direction:column;gap:1rem;margin-top:1.1rem}
+.panel h3{font-family:var(--display);font-size:1.3rem;margin:.6rem 0 0;font-weight:700;letter-spacing:.01em}
+html[lang="ar"] .panel h3:not(.tier-label){font-size:1.15rem}
+
+.qa{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
+.qa .btn{flex-direction:column;min-height:5rem;gap:.3rem;padding:.6rem}
+.qa .btn svg{width:1.6rem;height:1.6rem;color:var(--primary)}
+.callout{padding:.9rem 1rem;border-radius:1rem;background:var(--c-soft);border:1px solid color-mix(in srgb,var(--c) 30%,transparent);display:flex;flex-direction:column;gap:.2rem}
+.callout strong{color:var(--c)}
+.callout p{margin:0}
+
+.dl{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:1rem;overflow:hidden}
+.dl-row{display:grid;grid-template-columns:minmax(6.5rem,34%) minmax(0,1fr);border-top:1px solid var(--line)}
+.dl-row:first-child{border-top:0}
+.dl dt,.dl dd{margin:0;padding:.7rem .9rem;overflow-wrap:anywhere}
+.dl dt{color:var(--muted);font-weight:700;font-size:.92rem}
+.btn-inline{background:none;border:0;padding:0;display:inline-flex;align-items:center;gap:.45rem;min-height:2.4rem;text-align:start}
+
+/* family tree */
+.tree{display:flex;flex-direction:column}
+.tier{display:flex;flex-direction:column;gap:.5rem}
+.panel .tier-label,.tier-label{font-family:var(--body);font-size:.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:0}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+.kids-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr));gap:.55rem}
+.node{background:var(--surface);border:1px solid var(--line);border-radius:.9rem;padding:.55rem;display:flex;gap:.6rem;align-items:center;text-align:start;min-height:4.2rem;width:100%;min-width:0}
+.node-b{display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;min-width:0}
+.node-role{font-size:.8rem;font-weight:700;color:var(--muted)}
+.node-name{font-weight:700;font-size:.95rem;overflow-wrap:anywhere}
+.node.empty{border:2px dashed var(--line-strong);background:transparent;color:var(--muted);flex-direction:column;align-items:flex-start;justify-content:center;gap:.1rem}
+.node-add{color:var(--primary);font-weight:700;font-size:.92rem}
+.node.self{border:2px solid var(--primary);background:var(--primary-soft)}
+.stem{width:2px;height:1.2rem;background:var(--line-strong);margin:.35rem auto}
+
+/* timeline */
+.timeline{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:1rem;overflow:hidden}
+.timeline li{display:grid;grid-template-columns:6.6rem minmax(0,1fr) auto;gap:.7rem;align-items:start;padding:.7rem .9rem;border-top:1px solid var(--line)}
+.timeline li:first-child{border-top:0}
+.t-date{color:var(--muted);font-size:.9rem;font-variant-numeric:tabular-nums;font-weight:700}
+.t-body{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.t-note{color:var(--muted);font-size:.92rem;overflow-wrap:anywhere}
+.icon-btn{background:none;border:0;min-width:2.75rem;min-height:2.75rem;display:grid;place-items:center;border-radius:.7rem;color:var(--muted)}
+.icon-btn svg{width:1.3rem;height:1.3rem}
+
+.stlist{display:flex;flex-direction:column;gap:.55rem}
+.strow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding-block:.65rem;padding-inline:.9rem .7rem}
+.strow-b{display:flex;flex-direction:column;gap:.25rem;min-width:0}
+
+/* forms */
+.form{display:flex;flex-direction:column;gap:1.25rem}
+fieldset.field{border:0;padding:0;margin:0;min-width:0}
+.field{display:flex;flex-direction:column;gap:.4rem}
+.lbl{font-weight:700;font-size:1rem;padding:0}
+.req{font-weight:400;color:var(--muted);font-size:.85rem;margin-inline-start:.3rem}
+.hint{color:var(--muted);font-size:.88rem;margin:0}
+.input{min-height:3.3rem;padding:.6rem .85rem;border:2px solid var(--line-strong);border-radius:.8rem;background:var(--surface);color:var(--ink);width:100%;font-size:1rem}
+.input:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 3px var(--primary-soft)}
+.input-tag{font-family:var(--num);font-weight:700;font-size:1.5rem;letter-spacing:.03em;unicode-bidi:plaintext}
+textarea.input{min-height:5.5rem;resize:vertical;line-height:1.45}
+select.input{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 1.3rem) 55%,calc(100% - .95rem) 55%;background-size:.36rem .36rem;background-repeat:no-repeat;padding-inline-end:2.4rem}
+html[dir="rtl"] select.input{background-position:.95rem 55%,1.3rem 55%}
+.row{display:flex;gap:.5rem;align-items:stretch}
+.row > .input{flex:1;min-width:0}
+.opts{display:flex;flex-wrap:wrap;gap:.5rem}
+.opts-col{flex-direction:column}
+.opt{position:relative;display:block}
+.opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.opt span{display:flex;align-items:center;gap:.5rem;min-height:3.2rem;padding:.5rem 1rem;border:2px solid var(--line-strong);border-radius:.8rem;background:var(--surface);font-weight:700}
+.opt input:checked + span{border-color:var(--primary);background:var(--primary-soft)}
+.opt input:checked + span::before{content:"✓";color:var(--primary);font-weight:700}
+.opt input:focus-visible + span{outline:3px solid var(--blue);outline-offset:2px}
+.opt input:disabled + span{opacity:.5}
+.check{display:flex;gap:.75rem;align-items:flex-start;padding:.8rem .9rem;border:2px solid var(--line-strong);border-radius:.8rem;background:var(--surface);cursor:pointer}
+.check input{width:1.5rem;height:1.5rem;margin:.1rem 0 0;accent-color:var(--primary);flex:none}
+.check b{display:block}
+.err{padding:.85rem 1rem;border-radius:.9rem;background:var(--red-soft);color:var(--red);font-weight:700;border:1px solid color-mix(in srgb,var(--red) 35%,transparent)}
+.err ul{margin:.3rem 0 0;padding-inline-start:1.2rem}
+.input.bad{border-color:var(--red)}
+.photo-edit{display:grid;grid-template-columns:7rem minmax(0,1fr);gap:1rem;align-items:center}
+.photo-prev{width:7rem;height:7rem;border-radius:1rem;overflow:hidden;background:var(--surface-2);border:2px dashed var(--line-strong);display:grid;place-items:center;color:var(--muted)}
+.photo-prev img{width:100%;height:100%;object-fit:cover}
+.photo-prev svg{width:2rem;height:2rem}
+.photo-btns{display:flex;flex-direction:column;gap:.5rem;align-items:flex-start}
+.pbtn{display:flex;align-items:center;gap:.7rem;width:100%;min-height:3.6rem;padding:.5rem .8rem;border:2px solid var(--line-strong);border-radius:.8rem;background:var(--surface);text-align:start}
+.pbtn .choose{color:var(--primary);font-weight:700}
+.parent-pick{display:flex;flex-direction:column;gap:.35rem}
+.parent-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center}
+.swatches{display:flex;flex-wrap:wrap;gap:.5rem}
+.swatches .opt span{padding:.5rem .9rem}
+.unit-row{display:grid;grid-template-columns:6rem minmax(0,1fr);gap:.5rem}
+.preview-line{padding:.8rem 1rem;border-radius:.9rem;background:var(--surface-2);border:1px solid var(--line);margin:0}
+
+/* setup */
+.setlist{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:1rem;overflow:hidden}
+.setrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem;align-items:center;width:100%;padding:.8rem .9rem;background:none;border:0;border-top:1px solid var(--line);text-align:start;min-height:3.6rem}
+.setrow:first-child{border-top:0}
+.setrow svg{width:1.3rem;height:1.3rem;color:var(--muted)}
+.setrow-b{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.sizes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
+.langs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+.sizes .btn,.langs .btn{flex-direction:column;gap:0;min-height:4rem;padding:.4rem}
+.sizes .btn[aria-pressed="true"],.langs .btn[aria-pressed="true"]{border-color:var(--primary);background:var(--primary-soft)}
+.langs .btn{font-size:1.1rem}
+.rule-card{background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding:.85rem 1rem;display:flex;flex-direction:column;gap:.35rem;text-align:start;width:100%}
+.rule-card .rule-top{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start}
+.rule-card p{margin:0}
+
+/* sheet */
+.sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:44rem;max-height:90vh;max-height:90dvh;border-radius:1.25rem 1.25rem 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px);animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem 16px .7rem;border-bottom:1px solid var(--line)}
+.sheet-h h2{font-family:var(--display);font-size:1.5rem;margin:0;line-height:1.2;outline:none}
+html[lang="ar"] .sheet-h h2{font-size:1.25rem}
+.sheet-b{overflow:auto;padding:1rem 16px 1.3rem;display:flex;flex-direction:column;gap:1rem;overscroll-behavior:contain}
+.plist{display:flex;flex-direction:column;gap:.5rem}
+.prow{display:grid;grid-template-columns:3rem minmax(0,1fr) auto;gap:.7rem;align-items:center;width:100%;padding:.5rem .6rem;border:2px solid var(--line);border-radius:.9rem;background:var(--surface);text-align:start;min-height:4rem}
+.prow.on{border-color:var(--primary);background:var(--primary-soft)}
+
+.viewer{position:fixed;inset:0;z-index:70;background:#000;display:flex;flex-direction:column}
+.viewer img{flex:1;min-height:0;width:100%;object-fit:contain}
+.viewer-bar{display:flex;justify-content:space-between;align-items:center;padding:calc(.6rem + env(safe-area-inset-top,0px)) 16px .6rem;color:#fff;gap:1rem}
+.viewer-bar .btn{background:#fff;color:#111;border-color:#fff}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(5.3rem + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:.8rem 1.2rem;border-radius:.9rem;font-weight:700;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow);text-align:center}
+.loading{display:flex;flex-direction:column;align-items:center;gap:1rem;padding:4rem 1rem;color:var(--muted);text-align:center}
+.loading .tag{font-size:1.6rem}
+.fine{color:var(--muted);font-size:.86rem;margin:0}
+.mt{margin-top:1rem}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in" id="topbar"></div></header>
+<div id="banner" class="banner" hidden></div>
+<main class="wrap" id="main"></main>
+<nav class="tabbar" id="tabnav"><div class="tabbar-in" id="tabbar"></div></nav>
+<div id="sheet-root"></div>
+<div id="viewer-root"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------------- constants ---------------- */
+const LS_KEY = 'herdbook:v1';
+const COLS = ['animals','species','statuses','vaccines'];
+const COLORS = ['red','amber','purple','blue','green','grey'];
+const UNITS = ['days','weeks','months','years'];
+const EX_NOTE = 'Example schedule. Change it to match your vet’s advice.';
+/* Built-in types, statuses and example vaccine rules written on first start. */
+const LOCAL_DEFAULTS = {
+  species:{
+    sheep:{name:'Sheep',young:'Lamb',gestationDays:147,order:1},
+    goat:{name:'Goat',young:'Kid',gestationDays:150,order:2},
+    camel:{name:'Camel',young:'Calf',gestationDays:390,order:3},
+    cattle:{name:'Cattle',young:'Calf',gestationDays:283,order:4}
+  },
+  statuses:{
+    sick:{name:'Sick',color:'red',attention:true,leavesHerd:false,role:'',order:1},
+    injured:{name:'Injured',color:'amber',attention:true,leavesHerd:false,role:'',order:2},
+    pregnant:{name:'Pregnant',color:'purple',attention:false,leavesHerd:false,role:'pregnant',order:3},
+    'gave-birth':{name:'Just gave birth',color:'blue',attention:false,leavesHerd:false,role:'birth',order:4},
+    dead:{name:'Dead',color:'grey',attention:false,leavesHerd:true,role:'dead',order:5}
+  },
+  vaccines:{
+    'r-sheep-cd':{name:'Enterotoxemia (clostridial)',speciesId:'sheep',sex:'all',first:{n:8,u:'weeks'},booster:{n:4,u:'weeks'},repeat:{n:1,u:'years'},notes:EX_NOTE,example:true},
+    'r-sheep-pox':{name:'Sheep pox',speciesId:'sheep',sex:'all',first:{n:3,u:'months'},booster:null,repeat:{n:1,u:'years'},notes:EX_NOTE,example:true},
+    'r-goat-cd':{name:'Enterotoxemia (clostridial)',speciesId:'goat',sex:'all',first:{n:8,u:'weeks'},booster:{n:4,u:'weeks'},repeat:{n:1,u:'years'},notes:EX_NOTE,example:true},
+    'r-goat-ppr':{name:'PPR (goat plague)',speciesId:'goat',sex:'all',first:{n:3,u:'months'},booster:null,repeat:{n:3,u:'years'},notes:EX_NOTE,example:true},
+    'r-camel-pox':{name:'Camel pox',speciesId:'camel',sex:'all',first:{n:6,u:'months'},booster:null,repeat:{n:1,u:'years'},notes:EX_NOTE,example:true},
+    'r-cattle-fmd':{name:'Foot-and-mouth disease (FMD)',speciesId:'cattle',sex:'all',first:{n:4,u:'months'},booster:{n:4,u:'weeks'},repeat:{n:6,u:'months'},notes:EX_NOTE,example:true}
+  },
+  animals:{}
+};
+
+/* Example animals a new user can load to try the app. Dates are shifted to today when loaded. */
+const SAMPLE_DAY = '2026-09-24';
+const SAMPLE_ANIMALS = {"ex-s090":{"tag":"S-090","name":"Latifa","speciesId":"sheep","sex":"F","breed":"Naeimi","birthDate":"2017-02-11","damId":"","sireId":"","notes":"Foundation ewe of the flock.","statuses":[{"statusId":"dead","since":"2026-03-02","note":"Old age"}],"statusLog":[{"statusId":"dead","name":"Dead","action":"added","date":"2026-03-02","note":"Old age"}],"vaccinations":[{"id":"vx1","ruleId":"r-sheep-cd","name":"Enterotoxemia (clostridial)","date":"2025-09-01","note":"","course":"repeat"}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-s101":{"tag":"S-101","name":"Hessa","speciesId":"sheep","sex":"F","breed":"Naeimi","birthDate":"2021-01-15","damId":"ex-s090","sireId":"","notes":"","statuses":[],"statusLog":[],"vaccinations":[{"id":"vx2","ruleId":"r-sheep-cd","name":"Enterotoxemia (clostridial)","date":"2025-10-02","note":"","course":"repeat"},{"id":"vx3","ruleId":"r-sheep-pox","name":"Sheep pox","date":"2026-02-10","note":"Ministry campaign"}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-s102":{"tag":"S-102","name":"Fahad","speciesId":"sheep","sex":"M","breed":"Naeimi","birthDate":"2020-11-02","damId":"","sireId":"","notes":"Breeding ram. Black patch on the right eye.","statuses":[],"statusLog":[],"vaccinations":[{"id":"vx4","ruleId":"r-sheep-cd","name":"Enterotoxemia (clostridial)","date":"2025-09-15","note":"","course":"repeat"},{"id":"vx5","ruleId":"r-sheep-pox","name":"Sheep pox","date":"2026-02-10","note":"Ministry campaign"}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-s117":{"tag":"S-117","name":"Muna","speciesId":"sheep","sex":"F","breed":"Naeimi","birthDate":"2023-01-20","damId":"ex-s101","sireId":"ex-s102","notes":"","statuses":[{"statusId":"pregnant","since":"2026-07-10","note":"Confirmed by scan"}],"statusLog":[{"statusId":"pregnant","name":"Pregnant","action":"added","date":"2026-07-10","note":"Confirmed by scan"}],"vaccinations":[{"id":"vx6","ruleId":"r-sheep-cd","name":"Enterotoxemia (clostridial)","date":"2026-01-05","note":"","course":"repeat"},{"id":"vx7","ruleId":"r-sheep-pox","name":"Sheep pox","date":"2026-02-10","note":"Ministry campaign"}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-s131":{"tag":"S-131","name":"Reem","speciesId":"sheep","sex":"F","breed":"Naeimi","birthDate":"2024-02-05","damId":"ex-s101","sireId":"ex-s102","notes":"","statuses":[{"statusId":"sick","since":"2026-09-20","note":"Coughing and off her feed. Vet visit booked."}],"statusLog":[{"statusId":"sick","name":"Sick","action":"added","date":"2026-09-20","note":"Coughing and off her feed. Vet visit booked."}],"vaccinations":[{"id":"vx8","ruleId":"r-sheep-cd","name":"Enterotoxemia (clostridial)","date":"2025-10-06","note":"","course":"repeat"},{"id":"vx9","ruleId":"r-sheep-pox","name":"Sheep pox","date":"2026-02-10","note":"Ministry campaign"}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-s148":{"tag":"S-148","name":"","speciesId":"sheep","sex":"M","breed":"Naeimi","birthDate":"2025-01-28","damId":"ex-s117","sireId":"","notes":"","statuses":[],"statusLog":[],"vaccinations":[{"id":"vx10","ruleId":"r-sheep-cd","name":"Enterotoxemia (clostridial)","date":"2025-03-25","note":"","course":"first"},{"id":"vx11","ruleId":"r-sheep-cd","name":"Enterotoxemia (clostridial)","date":"2025-04-22","note":""},{"id":"vx12","ruleId":"r-sheep-cd","name":"Enterotoxemia (clostridial)","date":"2026-04-20","note":""},{"id":"vx13","ruleId":"r-sheep-pox","name":"Sheep pox","date":"2025-04-28","note":""}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-c007":{"tag":"C-007","name":"Shaha","speciesId":"camel","sex":"F","breed":"Majaheem","birthDate":"2016-03-01","damId":"","sireId":"","notes":"","statuses":[{"statusId":"gave-birth","since":"2026-09-12","note":"Gave birth to C-021"}],"statusLog":[{"statusId":"pregnant","name":"Pregnant","action":"added","date":"2025-08-20","note":"Confirmed by vet"},{"statusId":"pregnant","name":"Pregnant","action":"removed","date":"2026-09-12","note":"Gave birth"},{"statusId":"gave-birth","name":"Just gave birth","action":"added","date":"2026-09-12","note":"Gave birth to C-021"}],"vaccinations":[{"id":"vx14","ruleId":"r-camel-pox","name":"Camel pox","date":"2025-09-30","note":""}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-c021":{"tag":"C-021","name":"","speciesId":"camel","sex":"M","breed":"Majaheem","birthDate":"2026-09-12","damId":"ex-c007","sireId":"","notes":"Born at night, strong and feeding well.","statuses":[],"statusLog":[],"vaccinations":[],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-c009":{"tag":"C-009","name":"Wadha","speciesId":"camel","sex":"F","breed":"Majaheem","birthDate":"2018-01-20","damId":"","sireId":"","notes":"","statuses":[{"statusId":"injured","since":"2026-09-18","note":"Cut on the left foreleg. Cleaned and dressed."}],"statusLog":[{"statusId":"injured","name":"Injured","action":"added","date":"2026-09-18","note":"Cut on the left foreleg. Cleaned and dressed."}],"vaccinations":[{"id":"vx15","ruleId":"r-camel-pox","name":"Camel pox","date":"2025-11-15","note":""}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-g055":{"tag":"G-055","name":"Zain","speciesId":"goat","sex":"F","breed":"Najdi","birthDate":"2022-04-10","damId":"","sireId":"","notes":"","statuses":[{"statusId":"pregnant","since":"2026-06-15","note":""}],"statusLog":[{"statusId":"pregnant","name":"Pregnant","action":"added","date":"2026-06-15","note":""}],"vaccinations":[{"id":"vx16","ruleId":"r-goat-cd","name":"Enterotoxemia (clostridial)","date":"2025-10-05","note":"","course":"repeat"},{"id":"vx17","ruleId":"r-goat-ppr","name":"PPR (goat plague)","date":"2024-03-01","note":""}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"},"ex-g061":{"tag":"G-061","name":"","speciesId":"goat","sex":"M","breed":"Najdi","birthDate":"2025-03-03","damId":"ex-g055","sireId":"","notes":"","statuses":[],"statusLog":[],"vaccinations":[{"id":"vx18","ruleId":"r-goat-cd","name":"Enterotoxemia (clostridial)","date":"2025-04-28","note":"","course":"first"},{"id":"vx19","ruleId":"r-goat-cd","name":"Enterotoxemia (clostridial)","date":"2025-05-26","note":""},{"id":"vx20","ruleId":"r-goat-cd","name":"Enterotoxemia (clostridial)","date":"2026-05-20","note":""},{"id":"vx21","ruleId":"r-goat-ppr","name":"PPR (goat plague)","date":"2025-06-01","note":""}],"sample":true,"createdAt":"2026-09-01T06:00:00.000Z"}};
+
+/* ---------------- language ---------------- */
+let LANG = 'en';
+const AR = () => LANG === 'ar';
+/* Arabic names for the built-in records, shown while they still carry their original English name. */
+const BUILTIN_AR = {
+  species:{
+    sheep:{en:'Sheep', ar:'غنم', youngEn:'Lamb', youngAr:'حَمَل'},
+    goat:{en:'Goat', ar:'ماعز', youngEn:'Kid', youngAr:'جدي'},
+    camel:{en:'Camel', ar:'إبل', youngEn:'Calf', youngAr:'حُوار'},
+    cattle:{en:'Cattle', ar:'أبقار', youngEn:'Calf', youngAr:'عجل'}
+  },
+  statuses:{
+    sick:{en:'Sick', ar:'مريض'}, injured:{en:'Injured', ar:'مصاب'}, pregnant:{en:'Pregnant', ar:'حامل'},
+    'gave-birth':{en:'Just gave birth', ar:'ولدت حديثاً'}, dead:{en:'Dead', ar:'نافق'}
+  },
+  vaccines:{
+    'r-sheep-cd':{en:'Enterotoxemia (clostridial)', ar:'التسمم المعوي (المطثيات)'},
+    'r-goat-cd':{en:'Enterotoxemia (clostridial)', ar:'التسمم المعوي (المطثيات)'},
+    'r-sheep-pox':{en:'Sheep pox', ar:'جدري الأغنام'},
+    'r-goat-ppr':{en:'PPR (goat plague)', ar:'طاعون المجترات الصغيرة'},
+    'r-camel-pox':{en:'Camel pox', ar:'جدري الإبل'},
+    'r-cattle-fmd':{en:'Foot-and-mouth disease (FMD)', ar:'الحمى القلاعية'}
+  }
+};
+/* Arabic for the example animals' names, breeds and notes. */
+const SAMPLE_AR = {
+  'Hessa':'حصة','Fahad':'فهد','Muna':'منى','Reem':'ريم','Latifa':'لطيفة','Shaha':'شاهة','Wadha':'وضحى','Zain':'زين',
+  'Naeimi':'نعيمي','Majaheem':'مجاهيم','Najdi':'نجدي',
+  'Old age':'كبر السن','Confirmed by scan':'تأكد بالسونار','Coughing and off her feed. Vet visit booked.':'تسعل ولا تأكل جيداً. تم حجز موعد مع الطبيب البيطري.',
+  'Gave birth to C-021':'ولدت C-021','Confirmed by vet':'أكده الطبيب البيطري','Gave birth':'ولدت',
+  'Cut on the left foreleg. Cleaned and dressed.':'جرح في الرجل الأمامية اليسرى. تم تنظيفه وتضميده.','Ministry campaign':'حملة الوزارة',
+  'Foundation ewe of the flock.':'أول نعجة في القطيع.','Breeding ram. Black patch on the right eye.':'فحل التلقيح. بقعة سوداء حول العين اليمنى.',
+  'Born at night, strong and feeding well.':'وُلد ليلاً، قوي ويرضع جيداً.'
+};
+const tx = s => (AR() && s && SAMPLE_AR[s]) || s || '';
+function nm(col, doc, field = 'name'){
+  if(!doc) return '';
+  const v = doc[field] || '';
+  if(AR()){ const b = BUILTIN_AR[col] && BUILTIN_AR[col][doc.id]; if(b){ if(field === 'young' ? v === b.youngEn : v === b.en) return field === 'young' ? b.youngAr : b.ar; } }
+  return v;
+}
+/* If a built-in name is saved back unchanged in Arabic, keep the stored English original. */
+function unTr(col, id, field, value){
+  const b = id && BUILTIN_AR[col] && BUILTIN_AR[col][id];
+  if(b){ if(field === 'young' && value === b.youngAr) return b.youngEn; if(field === 'name' && value === b.ar) return b.en; }
+  return value;
+}
+
+const AR_FORMS = {
+  day:['يوم واحد','يومان','أيام','يوماً','يوم'],
+  week:['أسبوع واحد','أسبوعان','أسابيع','أسبوعاً','أسبوع'],
+  month:['شهر واحد','شهران','أشهر','شهراً','شهر'],
+  year:['سنة واحدة','سنتان','سنوات','سنة','سنة'],
+  animal:['حيوان واحد','حيوانان','حيوانات','حيواناً','حيوان']
+};
+let arPR = null; try{ arPR = new Intl.PluralRules('ar'); }catch(e){}
+function arCat(n){ if(arPR) return arPR.select(n); if(n === 0) return 'zero'; if(n === 1) return 'one'; if(n === 2) return 'two'; const m = n % 100; if(m >= 3 && m <= 10) return 'few'; if(m >= 11) return 'many'; return 'other'; }
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+function countUnit(n, u){
+  if(!AR()) return plural(n, u);
+  const f = AR_FORMS[u], c = arCat(n);
+  if(c === 'one') return f[0];
+  if(c === 'two') return f[1];
+  return `${n} ${c === 'few' ? f[2] : c === 'many' ? f[3] : f[4]}`;
+}
+
+const TX = {
+  brand:['Herd Book','سجل القطيع'],
+  back:['Back','رجوع'],
+  nav:['Main','التنقل'],
+  tabHome:['Home','الرئيسية'], tabAnimals:['Animals','الحيوانات'], tabAdd:['Add','إضافة'], tabVaccines:['Vaccines','التطعيمات'], tabSetup:['Setup','الإعدادات'],
+  loading:['Opening your herd book…','جارٍ فتح سجل القطيع…'],
+  otherLang:['عربي','English'],
+  otherLangLabel:['التبديل إلى العربية','Switch to English'],
+  animal:['Animal','حيوان'],
+  female:['Female','أنثى'], male:['Male','ذكر'], notSure:['Not sure','غير متأكد'],
+  animalsN:[v => `${v.n} ${v.n === 1 ? 'animal' : 'animals'}`, v => countUnit(v.n, 'animal')],
+  past:['Past','سابق'], pastAnimal:['Past animal','حيوان سابق'],
+  close:['Close','إغلاق'], cancel:['Cancel','إلغاء'], remove:['Remove','إزالة'], edit:['Edit','تعديل'], add:['Add','إضافة'],
+  required:['required','مطلوب'], optional:['optional','اختياري'],
+  notFound:['Not found','غير موجود'], goneAnimal:['This animal is no longer in your records.','هذا الحيوان لم يعد في سجلاتك.'], goBack:['Go back','رجوع'],
+  searchPh:['Search ID number or name','ابحث برقم الحيوان أو اسمه'], searchLbl:['Search by ID or name','البحث بالرقم أو الاسم'],
+  openX:[v => `Open ${v.x}`, v => `فتح ${v.x}`],
+  moreN:[v => `+${v.n} more`, v => `+${v.n} أخرى`],
+  // statuses of time
+  bornToday:['born today','وُلد اليوم'],
+  dueToday:['Due today','مستحق اليوم'], dueTomorrow:['Due tomorrow','مستحق غداً'],
+  lateBy:[v => `${v.t} late`, v => `متأخر ${v.t}`], inT:[v => `In ${v.t}`, v => `بعد ${v.t}`],
+  whenToday:['today','اليوم'], whenAgo:[v => `${v.t} ago`, v => `منذ ${v.t}`], whenIn:[v => `in ${v.t}`, v => `بعد ${v.t}`],
+  noRecordYet:['No record yet','لا يوجد سجل بعد'],
+  dose1:['First dose','الجرعة الأولى'], dose2:['Second dose','الجرعة الثانية'], doseR:['Repeat dose','جرعة دورية'],
+  markGiven:['Mark as given','تم التطعيم'],
+  // rule text
+  firstAt:[v => `First dose at ${v.p} old`, v => `الجرعة الأولى بعمر ${v.p}`], firstNow:['First dose right away','الجرعة الأولى فوراً'],
+  secondAfter:[v => `second dose ${v.p} later`, v => `الجرعة الثانية بعد ${v.p}`],
+  thenEvery1:[v => `then every ${v.u}`, v => `ثم كل ${v.u}`], thenEvery:[v => `then every ${v.p}`, v => `ثم كل ${v.p}`],
+  noMore:['no more doses after that','ولا جرعات بعدها'], onlyOnce:['given only once','تُعطى مرة واحدة فقط'],
+  femalesOnlyDot:[' Females only.',' للإناث فقط.'], malesOnlyDot:[' Males only.',' للذكور فقط.'],
+  unit_days:['days','أيام'], unit_weeks:['weeks','أسابيع'], unit_months:['months','أشهر'], unit_years:['years','سنوات'],
+  u1_days:['day','يوم'], u1_weeks:['week','أسبوع'], u1_months:['month','شهر'], u1_years:['year','سنة'],
+  // home
+  registerNew:['Register new animal','تسجيل حيوان جديد'],
+  sampleNote:['<b>These are example animals</b> so you can see how Herd Book works. Once you have added your own, remove the examples.','<b>هذه حيوانات تجريبية</b> لتتعرف على طريقة عمل التطبيق. بعد إضافة حيواناتك، احذف الأمثلة.'],
+  removeSamples:['Remove example animals','حذف الحيوانات التجريبية'],
+  inHerd:['In the herd','في القطيع'], noAnimalsYet:['No animals yet','لا توجد حيوانات بعد'],
+  spCount:[v => `${v.n} ${v.plural.toLowerCase()}`, v => `${v.name} ${v.n}`],
+  needAttention:['Need attention','تحتاج متابعة'], attnSub:['Sick, injured or other','مرض أو إصابة أو غيرها'], nothingCheck:['Nothing to check','لا شيء يحتاج متابعة'],
+  pregnantTile:['Pregnant','حوامل'], nextBirth:[v => `Next birth about ${v.d}`, v => `أقرب ولادة حوالي ${v.d}`], noneRecorded:['None recorded','لا يوجد'],
+  vaxDue:['Vaccines due','تطعيمات مستحقة'], nLate:[v => `${v.n} late · `, v => `${v.n} متأخرة · `], nSoon:[v => `${v.n} in the next 2 weeks`, v => `${v.n} خلال أسبوعين`],
+  needsAttention:['Needs attention','تحتاج متابعة'], seeAll:['See all','عرض الكل'],
+  expecting:['Expecting','ولادات متوقعة'], birthAbout:[v => `Birth expected about ${v.d}`, v => `الولادة المتوقعة حوالي ${v.d}`], pregnantWord:['Pregnant','حامل'],
+  yourHerd:['Your herd','قطيعك'], all:['All','الكل'], showType:['Show type','عرض النوع'],
+  emptyHerd:['No animals yet. Tap “Register new animal” to add your first one.','لا توجد حيوانات بعد. اضغط «تسجيل حيوان جديد» لإضافة أول حيوان.'],
+  // animals
+  animalsTitle:['Animals','الحيوانات'], allTypes:['All types','كل الأنواع'], typeLbl:['Type','النوع'],
+  statusLbl:['Status','الحالة'], anyStatus:['Any status','أي حالة'], noStatus:['No status','بدون حالة'],
+  showPast:['Show past animals','إظهار الحيوانات السابقة'], showPastHint:['Animals that died or left the herd','الحيوانات النافقة أو التي خرجت من القطيع'],
+  noMatch:['No animals match.','لا توجد نتائج.'], noMatchQ:['Check the ID number or clear the search.','تأكد من الرقم أو امسح البحث.'], noMatchF:['Try another filter.','جرّب تصفية أخرى.'],
+  kidsLabel:[v => `${v.plural} (${v.n})`, v => `الذرية (${v.n})`],
+  // profile
+  tOverview:['Overview','نظرة عامة'], tFamily:['Family','العائلة'], tStatus:['Status','الحالة'], tVaccines:['Vaccines','التطعيمات'],
+  viewPhoto:['View photo','عرض الصورة'], addPhoto:['Add photo','إضافة صورة'], photoOf:[v => `Photo of ${v.x}`, v => `صورة ${v.x}`],
+  noCurrentStatus:['No current status','لا توجد حالة حالية'],
+  linkMother:['Link mother','ربط الأم'], linkFather:['Link father','ربط الأب'],
+  rId:['ID number','رقم الحيوان'], rName:['Name','الاسم'], rType:['Type','النوع'], rSex:['Sex','الجنس'], rBorn:['Born','تاريخ الميلاد'], rBreed:['Breed','السلالة'],
+  rMother:['Mother','الأم'], rFather:['Father','الأب'], rReg:['Registered','تاريخ التسجيل'], rNotes:['Notes','ملاحظات'],
+  notSet:['Not set','غير محدد'], notKnown:['Not known','غير معروف'], none:['None','لا يوجد'],
+  ageOld:[v => `${v.a} old`, v => `العمر: ${v.a}`],
+  addStatus:['Add status','إضافة حالة'], recordVax:['Record vaccine','تسجيل تطعيم'], editDetails:['Edit details','تعديل البيانات'],
+  registerYoung:[v => `Register ${v.y.toLowerCase()}`, v => 'تسجيل مولود'],
+  pregnantSince:[v => `Pregnant since ${v.d}`, v => `حامل منذ ${v.d}`],
+  pregExpect:[v => `Birth expected about <b>${v.d}</b> (${v.w}), based on a ${v.g}-day pregnancy.`, v => `الولادة المتوقعة حوالي <b>${v.d}</b> (${v.w})، على أساس مدة حمل ${v.g}.`],
+  pregNoLen:['Set the pregnancy length for this type in Setup to see the expected birth date.','حدد مدة الحمل لهذا النوع في الإعدادات لمعرفة تاريخ الولادة المتوقع.'],
+  nextVax:['Next vaccine','التطعيم القادم'], details:['Details','البيانات'],
+  // family
+  mm:['Mother’s mother','أم الأم'], mf:['Mother’s father','أبو الأم'], fm:['Father’s mother','أم الأب'], ff:['Father’s father','أبو الأب'],
+  grandparents:['Grandparents','الأجداد'], parents:['Parents','الوالدان'], thisAnimal:['This animal','هذا الحيوان'],
+  notRecorded:['Not recorded','غير مسجل'], plusLink:[v => `+ Link ${v.who.toLowerCase()}`, v => `+ ربط ${v.who}`],
+  daughter:['Daughter','ابنة'], son:['Son','ابن'], bornOn:[v => `${v.w} · born ${v.d}`, v => `${v.w} · ${v.d}`],
+  offspringTier:[v => `Offspring · ${v.n} ${v.plural.toLowerCase()}`, v => `الذرية · ${v.n}`],
+  noOffspring:['No offspring recorded yet.','لا توجد ذرية مسجلة بعد.'],
+  registerNewYoung:[v => `Register new ${v.y.toLowerCase()}`, v => 'تسجيل مولود جديد'],
+  linkExisting:['Link an animal already registered','ربط حيوان مسجل مسبقاً'],
+  setSexFirst:['Set this animal’s sex (Edit) to add offspring.','حدد جنس هذا الحيوان (تعديل) لإضافة الذرية.'],
+  siblings:['Brothers and sisters','الإخوة والأخوات'],
+  sibFull:[v => ({F:'Sister',M:'Brother',U:'Sibling'}[v.s]) + ' · same parents', v => ({F:'أخت شقيقة',M:'أخ شقيق',U:'شقيق'}[v.s])],
+  sibHalf:[v => 'Half-' + ({F:'sister',M:'brother',U:'sibling'}[v.s]) + ' · same ' + (v.m ? 'mother' : 'father'), v => ({F:'أخت',M:'أخ',U:'أخ/أخت'}[v.s]) + (v.m ? ' من الأم' : ' من الأب')],
+  // status panel
+  currentStatus:['Current status','الحالة الحالية'],
+  sinceN:[v => `Since ${v.d} · ${v.n}`, v => `منذ ${v.d} · ${v.n}`],
+  birthExpectedShort:[v => `Birth expected about ${v.d}`, v => `الولادة المتوقعة حوالي ${v.d}`],
+  noStatusNow:['No current status. Nothing has been reported for this animal.','لا توجد حالة حالية. لم يُسجل أي شيء لهذا الحيوان.'],
+  history:['History','السجل'], removedW:['Removed','أُزيلت'], addedW:['Added','أُضيفت'], deletedStatus:['Deleted status','حالة محذوفة'], unknownStatus:['Unknown status','حالة غير معروفة'],
+  noStatusChanges:['No status changes recorded yet.','لا توجد تغييرات مسجلة بعد.'],
+  // vaccines panel
+  recordAVax:['Record a vaccine','تسجيل تطعيم'], reminders:['Reminders','التذكيرات'],
+  remindersOff:['Reminders are off because this animal is no longer in the herd.','التذكيرات متوقفة لأن هذا الحيوان لم يعد في القطيع.'],
+  noRulesFor:[v => `There are no vaccine rules for ${v.plural.toLowerCase()} yet.`, v => `لا توجد قواعد تطعيم لهذا النوع (${v.name}) بعد.`],
+  addVaxRuleLink:['Add a vaccine rule','إضافة قاعدة تطعيم'],
+  addBirthHint:['Add a birth date to get reminders based on age.','أضف تاريخ الميلاد للحصول على تذكيرات حسب العمر.'],
+  vaxGiven:['Vaccines given','التطعيمات المعطاة'], allDoses:[v => `All doses given · last ${v.d}`, v => `اكتملت الجرعات · آخرها ${v.d}`], allDosesShort:['All doses given','اكتملت الجرعات'],
+  lastGiven:[v => `Last given ${v.d}`, v => `آخر جرعة ${v.d}`], delRecord:['Delete this record','حذف هذا السجل'], noVaxYet:['No vaccines recorded yet.','لا توجد تطعيمات مسجلة بعد.'],
+  // form
+  editX:[v => `Edit ${v.x}`, v => `تعديل ${v.x}`], registerAnimal:['Register animal','تسجيل حيوان'],
+  photo:['Photo','الصورة'], changePhoto:['Change photo','تغيير الصورة'], removePhoto:['Remove photo','حذف الصورة'], photoPreview:['Photo preview','معاينة الصورة'],
+  photoHint:['A clear photo of the face or side helps you recognise the animal.','صورة واضحة للوجه أو الجانب تساعدك على التعرف على الحيوان.'],
+  preparingPhoto:['Preparing photo…','جارٍ تجهيز الصورة…'], badPhoto:['That file could not be opened as a photo. Try another one.','تعذر فتح هذا الملف كصورة. جرّب صورة أخرى.'],
+  tagHint:['The number on the ear tag. Each animal needs its own.','الرقم المكتوب على بطاقة الأذن. لكل حيوان رقم خاص به.'],
+  noTypesYet:['No livestock types yet.','لا توجد أنواع بعد.'], addAType:['Add a type','إضافة نوع'],
+  birthDate:['Birth date','تاريخ الميلاد'], today:['Today','اليوم'], birthHint:['Leave empty if you don’t know it.','اتركه فارغاً إن لم تكن تعرفه.'],
+  breedOpt:['Breed','السلالة'],
+  chooseMother:['Choose mother','اختر الأم'], chooseFather:['Choose father','اختر الأب'],
+  parentsHint:['Choose from animals you have already registered.','اختر من الحيوانات المسجلة مسبقاً.'],
+  markMother:[v => `Mark the mother as “${v.s}”`, v => `تسجيل الأم كـ«${v.s}»`], markMotherHint:[v => `Also removes her “${v.p}” status.`, v => `وإزالة حالة «${v.p}» عنها.`],
+  notesPh:['Markings, where you bought it, temperament…','العلامات، مكان الشراء، الطباع…'],
+  saveChanges:['Save changes','حفظ التعديلات'], saveAnimal:['Save animal','حفظ الحيوان'], deleteAnimal:['Delete this animal','حذف هذا الحيوان'],
+  parentsCleared:['Parents cleared because the type changed','تمت إزالة الوالدين لأن النوع تغيّر'],
+  fixBefore:[v => `Please fix ${v.n === 1 ? 'this' : 'these'} before saving:`, v => 'يرجى تصحيح ما يلي قبل الحفظ:'],
+  enterId:['Enter the ID number.','أدخل رقم الحيوان.'],
+  idUsed:[v => `ID ${v.tag} is already used by ${v.who} (${v.sp}). Use a different ID.`, v => `الرقم ${v.tag} مستخدم للحيوان ${v.who} (${v.sp}). استخدم رقماً آخر.`],
+  chooseType:['Choose the type of animal.','اختر نوع الحيوان.'], futureBirth:['The birth date can’t be in the future.','لا يمكن أن يكون تاريخ الميلاد في المستقبل.'],
+  changesSaved:['Changes saved','تم حفظ التعديلات'], xSaved:[v => `${v.x} saved`, v => `تم حفظ ${v.x}`],
+  gaveBirthTo:[v => `Gave birth to ${v.x}`, v => `ولدت ${v.x}`], gaveBirth:['Gave birth','ولدت'],
+  clearedWhen:[v => `Cleared when marked ${v.s}`, v => `أُزيلت عند تسجيل «${v.s}»`],
+  chooseTypeFirst:['Choose the type of animal first','اختر نوع الحيوان أولاً'],
+  // sheets
+  leaveQ:['Leave without saving?','الخروج بدون حفظ؟'], leaveBody:['The changes you made on this screen will be lost.','ستضيع التعديلات التي أجريتها في هذه الشاشة.'],
+  leaveYes:['Leave without saving','الخروج بدون حفظ'], keepEditing:['Keep editing','متابعة التعديل'],
+  chosen:['Chosen','مختار'], noMatchId:['No match. Check the ID number.','لا توجد نتيجة. تأكد من الرقم.'], pastDot:[' · Past',' · سابق'],
+  noMotherRec:['No mother recorded','بدون أم'], noFatherRec:['No father recorded','بدون أب'],
+  chooseParentOf:[v => `Choose ${v.m ? 'mother' : 'father'} of ${v.x}`, v => `اختر ${v.m ? 'أم' : 'أب'} ${v.x}`],
+  noFemales:[v => `No female ${v.plural.toLowerCase()} registered yet.`, v => 'لا توجد إناث مسجلة من هذا النوع بعد.'],
+  noMales:[v => `No male ${v.plural.toLowerCase()} registered yet.`, v => 'لا توجد ذكور مسجلة من هذا النوع بعد.'],
+  linkedAs:[v => `${v.x} linked as ${v.m ? 'mother' : 'father'}`, v => `تم ربط ${v.x} ${v.m ? 'كأم' : 'كأب'}`],
+  linkOffspringTo:[v => `Link offspring to ${v.x}`, v => `ربط ذرية بـ ${v.x}`],
+  noOthers:[v => `No other ${v.plural.toLowerCase()} to link.`, v => 'لا توجد حيوانات أخرى من هذا النوع لربطها.'],
+  linkedOffspring:[v => `${v.x} linked as ${v.f ? 'her' : 'his'} offspring${v.r ? ' (replaced the old link)' : ''}`, v => `تم ربط ${v.x} كذرية${v.r ? ' (تم استبدال الربط السابق)' : ''}`],
+  addStatusTitle:[v => `Add status · ${v.x}`, v => `إضافة حالة · ${v.x}`], chooseStatus:['Choose a status','اختر الحالة'], alreadySet:['(already set)','(مسجلة)'],
+  helpLeaves:[v => `Any other statuses will be cleared and ${v.x} will move to past animals.`, v => `ستُزال الحالات الأخرى وسينتقل ${v.x} إلى الحيوانات السابقة.`],
+  helpPreg:[v => `Tip: set the date to when she was bred. The expected birth date is worked out from a ${v.g}-day pregnancy.`, v => `نصيحة: اختر تاريخ التلقيح. يُحسب تاريخ الولادة المتوقع على أساس مدة حمل ${v.g}.`],
+  helpPregNoLen:['Set the pregnancy length for this type in Setup to see an expected birth date.','حدد مدة الحمل لهذا النوع في الإعدادات لمعرفة تاريخ الولادة المتوقع.'],
+  helpBirth:[v => `Her “${v.p}” status will be removed.`, v => `ستُزال حالة «${v.p}» عنها.`],
+  date:['Date','التاريخ'], dateBred:['Date bred or confirmed','تاريخ التلقيح أو التأكيد'], note:['Note','ملاحظة'],
+  statusNotePh:['For example: limping on the front left leg','مثال: عرج في الرجل الأمامية اليسرى'],
+  chooseStatusFirst:['Choose a status first.','اختر الحالة أولاً.'], saveStatus:['Save status','حفظ الحالة'],
+  newKindStatus:['Create a new kind of status','إنشاء نوع جديد من الحالات'],
+  statusAdded:[v => `${v.s} added to ${v.x}`, v => `أُضيفت حالة «${v.s}» إلى ${v.x}`],
+  removeStatusQ:[v => `Remove “${v.s}”?`, v => `إزالة «${v.s}»؟`],
+  removeStatusBody:[v => `This takes “${v.s}” off ${v.x}. It stays in the history.`, v => `ستُزال حالة «${v.s}» عن ${v.x}، وتبقى في السجل.`],
+  recoveredPh:['For example: recovered','مثال: تعافى'], removeStatusBtn:['Remove status','إزالة الحالة'],
+  statusRemoved:[v => `“${v.s}” removed`, v => `أُزيلت حالة «${v.s}»`],
+  recordVaxTitle:[v => `Record vaccine · ${v.x}`, v => `تسجيل تطعيم · ${v.x}`], whichVax:['Which vaccine?','أي تطعيم؟'],
+  otherVax:['Another vaccine or treatment','تطعيم أو علاج آخر'], otherVaxName:['Name of vaccine or treatment','اسم التطعيم أو العلاج'], otherVaxPh:['For example: Deworming','مثال: علاج الديدان'],
+  dateGiven:['Date given','تاريخ الإعطاء'], whichDose:['Which dose is this?','أي جرعة هذه؟'],
+  firstEver:['Its first dose ever','أول جرعة له على الإطلاق'], firstEverHint:['· a second dose will be due','· ستستحق جرعة ثانية'],
+  hadCourse:['It already had its first course','أخذ الجرعات الأولى سابقاً'], hadCourseHint:['· next is the regular repeat','· القادمة هي الجرعة الدورية'],
+  vaxNotePh:['Batch number, who gave it, dose','رقم التشغيلة، من أعطاه، الجرعة'],
+  chooseVaxFirst:['Choose a vaccine first.','اختر التطعيم أولاً.'], typeVaxName:['Type the name of the vaccine or treatment.','اكتب اسم التطعيم أو العلاج.'],
+  saveVax:['Save vaccine record','حفظ سجل التطعيم'], vaxRecorded:[v => `${v.s} recorded for ${v.x}`, v => `تم تسجيل ${v.s} لـ ${v.x}`],
+  delVaxQ:['Delete this vaccine record?','حذف سجل التطعيم هذا؟'],
+  delVaxBody:[v => `${v.s} given to ${v.x} on ${v.d}. Reminders will be worked out again without it.`, v => `${v.s} أُعطي لـ ${v.x} بتاريخ ${v.d}. ستُحسب التذكيرات من جديد بدونه.`],
+  delRecordBtn:['Delete record','حذف السجل'], recordDeleted:['Record deleted','تم حذف السجل'],
+  // vaccines screen
+  vaxTitle:['Vaccines','التطعيمات'], vDue:['Due','المستحقة'], vGiven:['Given','المعطاة'], vRules:['Rules','القواعد'],
+  noRulesYet:['No vaccine rules yet. Add a rule for each vaccine you give, and reminders will appear here.','لا توجد قواعد تطعيم بعد. أضف قاعدة لكل تطعيم تعطيه، وستظهر التذكيرات هنا.'],
+  addVaxRule:['Add vaccine rule','إضافة قاعدة تطعيم'],
+  gLate:['Late','متأخرة'], gSoon:['Due in the next 2 weeks','مستحقة خلال أسبوعين'], gNext:['Coming up in the next 2 months','قادمة خلال شهرين'],
+  allUpToDate:['Nothing is due in the next 2 months. All vaccines are up to date.','لا شيء مستحق خلال الشهرين القادمين. كل التطعيمات محدّثة.'],
+  latest150:['Showing the latest 150 records. Open an animal to see all of its records.','يُعرض آخر 150 سجلاً. افتح الحيوان لرؤية كل سجلاته.'],
+  rulesIntro:['A rule tells Herd Book when each type of animal needs a vaccine. Reminders are worked out from the birth date and the last dose given. Set the schedules to match your vet’s advice.','القاعدة تحدد متى يحتاج كل نوع من الحيوانات إلى التطعيم. تُحسب التذكيرات من تاريخ الميلاد وآخر جرعة. اضبط المواعيد حسب نصيحة الطبيب البيطري.'],
+  exampleL:['Example','مثال'], noRulesForType:[v => `No rules for ${v.plural.toLowerCase()}.`, v => 'لا توجد قواعد لهذا النوع.'], addOne:['Add one','إضافة قاعدة'],
+  // rule form
+  editRule:['Edit vaccine rule','تعديل قاعدة التطعيم'], newRule:['New vaccine rule','قاعدة تطعيم جديدة'], ruleGone:['This rule was deleted.','تم حذف هذه القاعدة.'],
+  vaxName:['Vaccine name','اسم التطعيم'], vaxNamePh:['For example: Sheep pox','مثال: جدري الأغنام'],
+  forWhich:['For which animals?','لأي حيوانات؟'], giveTo:['Give it to','يُعطى لـ'], femalesOnly:['Females only','الإناث فقط'], malesOnly:['Males only','الذكور فقط'],
+  firstAge:['First dose at what age?','في أي عمر تُعطى الجرعة الأولى؟'], firstAgeHint:['Use 0 to give it as soon as the animal is registered.','اكتب 0 لإعطائها فور تسجيل الحيوان.'],
+  secondDose:['Second dose after the first','الجرعة الثانية بعد الأولى بـ'], secondHint:['Leave empty if there is no second dose.','اتركه فارغاً إن لم تكن هناك جرعة ثانية.'],
+  repeatEvery:['Then repeat every','ثم تُكرر كل'], repeatHint:['Leave empty if it is not repeated.','اتركه فارغاً إن لم تكن تُكرر.'],
+  number:['Number','العدد'], unit:['Unit','الوحدة'], planPrefix:['Reminder plan: ','خطة التذكير: '],
+  ruleNotesPh:['Dose, where to inject, supplier…','الجرعة، مكان الحقن، المورد…'],
+  saveRule:['Save rule','حفظ القاعدة'], deleteRule:['Delete this rule','حذف هذه القاعدة'],
+  fixPlain:['Please fix before saving:','يرجى تصحيح ما يلي قبل الحفظ:'], enterVaxName:['Enter the vaccine name.','أدخل اسم التطعيم.'], chooseWhich:['Choose which animals it is for.','اختر نوع الحيوانات.'],
+  ruleSaved:['Vaccine rule saved','تم حفظ القاعدة'],
+  delRuleQ:['Delete this vaccine rule?','حذف قاعدة التطعيم؟'],
+  delRuleBody:[v => `Reminders for “${v.s}” will stop. Vaccine records already saved on each animal are kept.`, v => `ستتوقف تذكيرات «${v.s}». تبقى سجلات التطعيم المحفوظة لكل حيوان.`],
+  delRuleBtn:['Delete rule','حذف القاعدة'], ruleDeleted:['Rule deleted','تم حذف القاعدة'],
+  // setup
+  setupTitle:['Setup','الإعدادات'], language:['Language','اللغة'], textSize:['Text size','حجم الخط'],
+  sizeM:['Normal','عادي'], sizeL:['Large','كبير'], sizeXL:['Extra large','كبير جداً'], sizeSample:['Aa','أب'],
+  types:['Livestock types','أنواع الماشية'],
+  typeMeta:[v => `Young: ${v.y} · Pregnancy: ${v.g} · ${v.n}`, v => `الصغير: ${v.y} · مدة الحمل: ${v.g} · ${v.n}`], notSetF:['not set','غير محددة'],
+  noTypes:['No types yet.','لا توجد أنواع بعد.'], addType:['Add livestock type','إضافة نوع'],
+  statusesH:['Statuses','الحالات'], showsAttn:['Shows in “Needs attention”','تظهر في «تحتاج متابعة»'], movesPast:['Moves animal to past animals','تنقل الحيوان إلى الحيوانات السابقة'],
+  builtIn:['Built in','أساسية'], customStatus:['Custom status','حالة مخصصة'], addStatusBtn:['Add status','إضافة حالة'],
+  vaxRules:['Vaccine rules','قواعد التطعيم'], manageRules:[v => `Manage vaccine rules (${v.n})`, v => `إدارة قواعد التطعيم (${v.n})`],
+  exampleAnimals:['Example animals','الحيوانات التجريبية'],
+  sampleSetup:[v => `${v.n} example animals were added so you can try the app. Your own animals are not affected when you remove them.`, v => `الحيوانات التجريبية: ${v.n}. أُضيفت لتجربة التطبيق، وحذفها لا يؤثر على حيواناتك.`],
+  yourRecords:['Your records','سجلاتك'],
+  onRecord:[v => `${v.n} animals on record.`, v => `عدد الحيوانات المسجلة: ${v.n}.`],
+  herdCsv:['Herd list (spreadsheet)','قائمة القطيع (جدول)'],
+  vetNote:['Vaccine reminders follow the rules you set. They do not replace advice from your veterinarian.','تذكيرات التطعيم تتبع القواعد التي تضعها، ولا تغني عن استشارة الطبيب البيطري.'],
+  // type form
+  newType:['New livestock type','نوع جديد'], typeGone:['This type was deleted.','تم حذف هذا النوع.'],
+  typeNamePh:['For example: Horse','مثال: خيل'], youngQ:['What are the young called?','ماذا يُسمى الصغير؟'], youngPh:['For example: Foal','مثال: مهر'],
+  youngHint:['Used on buttons like “Register new foal”.','يظهر في بيانات النوع.'],
+  gestation:['Length of pregnancy (days)','مدة الحمل (بالأيام)'], gestationPh:['For example: 340','مثال: 340'], gestationHint:['Used to work out the expected birth date.','تُستخدم لحساب تاريخ الولادة المتوقع.'],
+  saveType:['Save type','حفظ النوع'], cantDeleteType:[v => `This type can’t be deleted while ${v.n} ${v.n === 1 ? 'animal uses' : 'animals use'} it.`, v => `لا يمكن حذف هذا النوع ما دامت هناك حيوانات مسجلة منه (${v.n}).`],
+  deleteType:['Delete this type','حذف هذا النوع'], enterTypeName:['Enter a name for this type.','أدخل اسماً لهذا النوع.'],
+  exists:[v => `“${v.s}” already exists.`, v => `«${v.s}» موجود مسبقاً.`], typeSaved:['Type saved','تم حفظ النوع'],
+  delTypeQ:[v => `Delete ${v.s}?`, v => `حذف ${v.s}؟`],
+  delTypeRules:[v => `Its ${v.n} vaccine ${v.n === 1 ? 'rule' : 'rules'} will be deleted too.`, v => `ستُحذف قواعد التطعيم الخاصة به أيضاً (${v.n}).`],
+  delTypeNone:['This type has no animals or vaccine rules.','لا توجد حيوانات أو قواعد تطعيم لهذا النوع.'],
+  delTypeBtn:['Delete type','حذف النوع'], typeDeleted:['Type deleted','تم حذف النوع'],
+  // status form
+  newStatus:['New status','حالة جديدة'], statusGone:['This status was deleted.','تم حذف هذه الحالة.'],
+  rolePreg:['Built in: used to work out expected birth dates.','أساسية: تُستخدم لحساب تواريخ الولادة المتوقعة.'],
+  roleBirth:['Built in: offered for the mother when you register a newborn.','أساسية: تُقترح للأم عند تسجيل مولود جديد.'],
+  roleDead:['Built in: moves the animal to past animals.','أساسية: تنقل الحيوان إلى الحيوانات السابقة.'],
+  statusNamePh:['For example: Sold, Lame, In quarantine','مثال: مباع، أعرج، في الحجر'], colour:['Colour','اللون'],
+  c_red:['Red','أحمر'], c_amber:['Orange','برتقالي'], c_purple:['Purple','بنفسجي'], c_blue:['Blue','أزرق'], c_green:['Green','أخضر'], c_grey:['Grey','رمادي'],
+  attnCheck:['Needs attention','تحتاج متابعة'], attnCheckHint:['Animals with this status are listed at the top of Home.','تظهر الحيوانات بهذه الحالة في أعلى الصفحة الرئيسية.'],
+  leavesCheck:['The animal leaves the herd','الحيوان يخرج من القطيع'], leavesCheckHint:['For statuses like Dead or Sold. The animal moves to past animals and its reminders stop.','لحالات مثل نافق أو مباع. ينتقل الحيوان إلى الحيوانات السابقة وتتوقف تذكيراته.'],
+  deleteStatus:['Delete this status','حذف هذه الحالة'], enterStatusName:['Enter a name for this status.','أدخل اسماً لهذه الحالة.'], statusSaved:['Status saved','تم حفظ الحالة'],
+  delStatusQ:[v => `Delete “${v.s}”?`, v => `حذف «${v.s}»؟`],
+  delStatusSome:[v => `${v.n} ${v.n === 1 ? 'animal has' : 'animals have'} this status now. It will be taken off them. Their history keeps the name.`, v => `هذه الحالة مسجلة الآن على حيوانات (${v.n}). ستُزال عنها، ويبقى الاسم في السجل.`],
+  delStatusNone:['No animal has this status now. Past history keeps the name.','لا يوجد حيوان بهذه الحالة الآن. يبقى الاسم في السجل.'],
+  delStatusBtn:['Delete status','حذف الحالة'], statusDeleted:['Status deleted','تم حذف الحالة'], statusDeletedNote:['Status deleted','حُذفت الحالة'],
+  // delete animal & samples
+  delAnimalQ:[v => `Delete ${v.x}?`, v => `حذف ${v.x}؟`],
+  delAnimalBody:[v => `This removes ${v.x} and all of its status and vaccine records for good.${v.k ? ` Its ${v.k} offspring will stay but will no longer be linked to it.` : ''} If the animal died or was sold, add a status instead so its family history is kept.`, v => `سيُحذف ${v.x} مع كل سجلات الحالة والتطعيم نهائياً.${v.k ? ` ستبقى ذريته (${v.k}) لكن لن تكون مرتبطة به.` : ''} إذا نفق الحيوان أو بيع، أضف حالة بدلاً من الحذف ليبقى سجل العائلة.`],
+  deleteForGood:['Delete for good','حذف نهائي'], xDeleted:[v => `${v.x} deleted`, v => `تم حذف ${v.x}`],
+  removeSamplesQ:['Remove example animals?','حذف الحيوانات التجريبية؟'],
+  removeSamplesBody:[v => `This deletes the ${v.n} example animals. Animals you added yourself are kept.`, v => `سيتم حذف الحيوانات التجريبية (${v.n}). الحيوانات التي أضفتها أنت ستبقى.`],
+  removeExamples:['Remove examples','حذف الأمثلة'], samplesRemoved:['Example animals removed','تم حذف الحيوانات التجريبية'],
+  // storage
+  eQuota:['Storage is full. Delete old records to make room for new ones.','مساحة التخزين ممتلئة. احذف سجلات قديمة لإفساح المجال.'],
+  eSave:['That change was not saved. Check your internet connection and try again.','لم يُحفظ هذا التغيير. تحقق من اتصال الإنترنت وحاول مرة أخرى.'],
+  fileSaved:['File saved','تم حفظ الملف'],
+  csvHead:[['ID','Name','Type','Sex','Breed','Birth date','Age','Mother ID','Father ID','Current statuses','In herd','Offspring count','Offspring IDs','Last vaccine','Next vaccine due','Notes'],
+           ['الرقم','الاسم','النوع','الجنس','السلالة','تاريخ الميلاد','العمر','رقم الأم','رقم الأب','الحالات الحالية','في القطيع','عدد الذرية','أرقام الذرية','آخر تطعيم','التطعيم القادم','ملاحظات']],
+  eNoStorage:['This browser can’t save records. Open Herd Book in Safari on iPhone, or in Chrome or Edge on Android and PC, and not in a private window.','هذا المتصفح لا يستطيع حفظ السجلات. افتح التطبيق في Safari على iPhone، أو في Chrome أو Edge على Android والكمبيوتر، وليس في نافذة خاصة.'],
+  deviceNote:['Your records are saved on this device only. They are never sent anywhere, and the app works without internet. Save a backup file regularly and keep a copy somewhere safe.','تُحفظ سجلاتك على هذا الجهاز فقط ولا تُرسل إلى أي مكان، ويعمل التطبيق بدون إنترنت. احفظ نسخة احتياطية بانتظام واحتفظ بها في مكان آمن.'],
+  updateReady:['A new version of Herd Book is ready.','يتوفر إصدار جديد من التطبيق.'], updateNow:['Update now','تحديث الآن'],
+  installH:['Install on this device','التثبيت على هذا الجهاز'],
+  installTitle:[v => v.pc ? 'Install Herd Book on this computer' : 'Install Herd Book on this phone', v => v.pc ? 'ثبّت التطبيق على هذا الكمبيوتر' : 'ثبّت التطبيق على هذا الهاتف'],
+  installWhy:['It opens from your home screen like any app and works without internet.','يفتح من الشاشة الرئيسية مثل أي تطبيق ويعمل بدون إنترنت.'],
+  installBtn:['Install','تثبيت'], notNow:['Not now','ليس الآن'],
+  iosSteps:[['Tap the Share button (the square with an arrow pointing up).','Scroll down and tap “Add to Home Screen”.','Tap “Add”.'],['اضغط زر المشاركة (المربع الذي يخرج منه سهم).','مرّر للأسفل واضغط «إضافة إلى الشاشة الرئيسية».','اضغط «إضافة».']],
+  androidSteps:[['In Chrome, tap the menu button (⋮) at the top.','Tap “Install app” or “Add to Home screen”.','Tap “Install”.'],['في Chrome، اضغط زر القائمة (⋮) في الأعلى.','اضغط «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».','اضغط «تثبيت».']],
+  pcSteps:[['Open this page in Chrome or Microsoft Edge.','Click the install icon at the end of the address bar.','Click “Install”.'],['افتح هذه الصفحة في Chrome أو Microsoft Edge.','اضغط أيقونة التثبيت في طرف شريط العنوان.','اضغط «تثبيت».']],
+  installedNote:['Herd Book is installed on this device. Open it from your home screen or apps list. It works without internet.','التطبيق مثبت على هذا الجهاز. افتحه من الشاشة الرئيسية أو قائمة التطبيقات. يعمل بدون إنترنت.'],
+  backupH:['Backup','النسخ الاحتياطي'],
+  backupIntro:['A backup file holds all your animals, photos, statuses and vaccine records. Use it to keep your records safe, or to move them to a new phone or to another person’s phone.','ملف النسخة الاحتياطية يحتوي على كل حيواناتك وصورها وحالاتها وسجلات التطعيم. استخدمه لحفظ سجلاتك، أو لنقلها إلى هاتف جديد أو إلى هاتف شخص آخر.'],
+  saveBackup:['Save backup file','حفظ نسخة احتياطية'], restoreBackup:['Restore from backup file','الاستعادة من نسخة احتياطية'],
+  lastBackup:[v => `Last backup: ${v.d}.`, v => `آخر نسخة احتياطية: ${v.d}.`], lastBackupNever:['No backup saved yet.','لم تُحفظ أي نسخة احتياطية بعد.'],
+  backupSaved:['Backup file saved','تم حفظ النسخة الاحتياطية'],
+  restoreQ:['Replace the records on this device?','استبدال السجلات على هذا الجهاز؟'],
+  restoreBody:[v => `This backup is from ${v.d} and has ${v.n} ${v.n === 1 ? 'animal' : 'animals'}. It will replace everything on this device now (${v.m} ${v.m === 1 ? 'animal' : 'animals'}).`, v => `هذه النسخة بتاريخ ${v.d}، وعدد الحيوانات فيها: ${v.n}. ستحل محل كل ما هو موجود على هذا الجهاز الآن (عدد الحيوانات: ${v.m}).`],
+  restoreYes:['Replace with backup','استبدال بالنسخة الاحتياطية'], restored:['Backup restored','تمت استعادة النسخة الاحتياطية'],
+  badBackup:['This file is not a Herd Book backup. Choose the backup file you saved from Herd Book.','هذا الملف ليس نسخة احتياطية من التطبيق. اختر ملف النسخة الاحتياطية الذي حفظته من التطبيق.'],
+  remindTitle:['Save a backup','احفظ نسخة احتياطية'],
+  remindBody:[v => `Your records are kept only on this device. If it is lost or reset, they are gone. ${v.when}`, v => `سجلاتك محفوظة على هذا الجهاز فقط، وإذا ضاع أو أُعيد ضبطه ستضيع. ${v.when}`],
+  saveBackupNow:['Save backup now','حفظ نسخة احتياطية الآن'],
+  loadSamples:['Load example animals','تحميل حيوانات تجريبية'],
+  loadSamplesHint:[v => `Adds ${v.n} example animals so you can see how everything works. You can remove them later in one tap.`, v => `يضيف حيوانات تجريبية (${v.n}) لتتعرف على طريقة العمل. يمكنك حذفها لاحقاً بضغطة واحدة.`],
+  samplesLoaded:['Example animals added','تمت إضافة الحيوانات التجريبية'], tryFirst:['Want to see how it works first?','تريد أن ترى طريقة العمل أولاً؟'],
+  yes:['Yes','نعم'], no:['No','لا']
+};
+function t(k, v = {}){ const e = TX[k]; if(!e) return k; const s = e[AR() ? 1 : 0]; return typeof s === 'function' ? s(v) : s; }
+
+const ICON = {
+  home:'<path d="M3 11 12 4l9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+  tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  syringe:'<path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3a2.4 2.4 0 0 1-3.4 0l-.6-.6a2.4 2.4 0 0 1 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/><path d="m14 4 6 6"/>',
+  sliders:'<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  back:'<path d="M15 18l-6-6 6-6"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  pencil:'<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
+  pulse:'<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+  family:'<circle cx="6" cy="5" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="12" cy="19" r="2.5"/><path d="M6 7.5v1.5a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7.5M12 12v4.5"/>',
+  download:'<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>',
+  trash:'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>'
+};
+const ico = (n, cls = '') => `<svg class="${cls}${n === 'back' || n === 'chev' ? ' flip' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+
+/* ---------------- utilities ---------------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayISO = () => iso(new Date());
+const parseD = s => { if(!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null; const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (s, n) => { const d = parseD(s); if(!d) return ''; d.setDate(d.getDate()+n); return iso(d); };
+const diffDays = (a, b) => { const A = parseD(a), B = parseD(b); if(!A || !B) return 0; return Math.round((B - A) / 86400000); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const locale = () => AR() ? 'ar-u-ca-gregory-nu-latn' : 'en-GB';
+function fmtDate(s){ const d = parseD(s); if(!d) return '—'; try{ return d.toLocaleDateString(locale(), {day:'numeric',month:'short',year:'numeric'}); }catch(e){ return s; } }
+function monthsBetween(a, b){ const A = parseD(a), B = parseD(b); let m = (B.getFullYear()-A.getFullYear())*12 + (B.getMonth()-A.getMonth()); if(B.getDate() < A.getDate()) m--; return m; }
+function ageText(b){
+  if(!parseD(b)) return '';
+  const td = todayISO(), days = diffDays(b, td);
+  if(days < 0) return '';
+  if(days === 0) return t('bornToday');
+  if(days < 60) return countUnit(days, 'day');
+  const m = monthsBetween(b, td);
+  if(m < 24) return countUnit(m, 'month');
+  const y = Math.floor(m/12), mm = m % 12;
+  return countUnit(y, 'year') + (mm ? (AR() ? ' و' : ' ') + countUnit(mm, 'month') : '');
+}
+const spanText = abs => abs < 60 ? countUnit(abs, 'day') : countUnit(Math.round(abs/30.44), 'month');
+function relDays(n){
+  if(n === 0) return t('dueToday');
+  if(n === 1) return t('dueTomorrow');
+  return n < 0 ? t('lateBy', {t:spanText(-n)}) : t('inT', {t:spanText(n)});
+}
+function whenText(n){ if(n === 0) return t('whenToday'); return n < 0 ? t('whenAgo', {t:spanText(-n)}) : t('whenIn', {t:spanText(n)}); }
+function addPeriod(s, p){
+  if(!p || !p.n) return s;
+  const d = parseD(s); if(!d) return '';
+  const n = Number(p.n);
+  if(p.u === 'days') d.setDate(d.getDate()+n);
+  else if(p.u === 'weeks') d.setDate(d.getDate()+7*n);
+  else {
+    const months = p.u === 'years' ? 12*n : n;
+    const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth()+months);
+    const last = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+    d.setDate(Math.min(day, last));
+  }
+  return iso(d);
+}
+const unitKey = u => ({days:'day', weeks:'week', months:'month', years:'year'}[u] || 'day');
+function periodText(p){ if(!p || !p.n) return ''; return countUnit(Number(p.n), unitKey(p.u)); }
+function ruleText(r){
+  const parts = [];
+  parts.push(r.first && r.first.n ? t('firstAt', {p:periodText(r.first)}) : t('firstNow'));
+  if(r.booster && r.booster.n) parts.push(t('secondAfter', {p:periodText(r.booster)}));
+  if(r.repeat && r.repeat.n) parts.push(Number(r.repeat.n) === 1 ? t('thenEvery1', {u:t('u1_' + r.repeat.u)}) : t('thenEvery', {p:periodText(r.repeat)}));
+  else parts.push(r.booster && r.booster.n ? t('noMore') : t('onlyOnce'));
+  const who = r.sex === 'F' ? t('femalesOnlyDot') : r.sex === 'M' ? t('malesOnlyDot') : '';
+  return parts.join(AR() ? '، ' : ', ') + '.' + who;
+}
+const UNCOUNT = new Set(['sheep','cattle','deer','fish','bison','swine','poultry']);
+function pluralWord(w, n){
+  if(!w) return '';
+  if(n === 1 || UNCOUNT.has(w.toLowerCase())) return w;
+  if(/[^aeiou]y$/i.test(w)) return w.slice(0,-1)+'ies';
+  if(/(al|ar|el)f$/i.test(w)) return w.slice(0,-1)+'ves';
+  if(/(s|x|ch|sh)$/i.test(w)) return w+'es';
+  return w+'s';
+}
+const sexWord = s => s === 'F' ? t('female') : s === 'M' ? t('male') : '';
+const safeImg = s => (typeof s === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(s)) ? s : '';
+
+/* ---------------- storage (on this device, IndexedDB) ---------------- */
+const DB_NAME = 'herdbook';
+const STORES = ['animals','species','statuses','vaccines','photos','meta'];
+let bc = null; try{ bc = new BroadcastChannel('herdbook'); }catch(e){ bc = null; }
+function idbOpen(){
+  return new Promise((res, rej) => {
+    if(!('indexedDB' in window)) return rej(new Error('no indexedDB'));
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = () => { const db = r.result; STORES.forEach(s => { if(!db.objectStoreNames.contains(s)) db.createObjectStore(s); }); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error('blocked'));
+  });
+}
+function idbAll(db, store){
+  return new Promise((res, rej) => {
+    const m = new Map();
+    const req = db.transaction(store, 'readonly').objectStore(store).openCursor();
+    req.onsuccess = () => { const c = req.result; if(c){ m.set(String(c.key), c.value); c.continue(); } else res(m); };
+    req.onerror = () => rej(req.error);
+  });
+}
+function idbGet(db, store, key){
+  return new Promise((res, rej) => { const req = db.transaction(store, 'readonly').objectStore(store).get(key); req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); });
+}
+const withId = (m) => { const out = new Map(); m.forEach((v, k) => out.set(k, Object.assign({}, v, {id:k}))); return out; };
+function shiftDates(o, days){
+  if(Array.isArray(o)) return o.map(x => shiftDates(x, days));
+  if(o && typeof o === 'object'){
+    const out = {};
+    Object.entries(o).forEach(([k, v]) => {
+      if((k === 'birthDate' || k === 'since' || k === 'date') && typeof v === 'string' && parseD(v)) out[k] = addDays(v, days);
+      else if(k === 'createdAt' && typeof v === 'string') out[k] = addDays(v.slice(0,10), days) + v.slice(10);
+      else out[k] = shiftDates(v, days);
+    });
+    return out;
+  }
+  return o;
+}
+
+const Store = {
+  mode:'loading', idb:null, version:0, meta:{},
+  data:{animals:new Map(), species:new Map(), statuses:new Map(), vaccines:new Map()},
+  photoCache:new Map(),
+  get ready(){ return this.mode !== 'loading'; },
+  async init(){
+    try{
+      this.idb = await idbOpen();
+      await this.loadAll();
+      if(!this.meta.seeded) await this.seedDefaults();
+      this.mode = 'device';
+    }catch(e){
+      this.mode = 'memory';
+      COLS.forEach(c => { const m = new Map(); Object.entries(LOCAL_DEFAULTS[c] || {}).forEach(([id, d]) => m.set(id, Object.assign({}, d, {id}))); this.data[c] = m; });
+      showBanner('eNoStorage', 'error');
+    }
+    if(bc) bc.onmessage = () => { this.loadAll().then(() => { this.photoCache.clear(); this.changed(); }).catch(() => {}); };
+    this.changed();
+  },
+  async loadAll(){
+    for(const c of COLS) this.data[c] = withId(await idbAll(this.idb, c));
+    const meta = await idbAll(this.idb, 'meta');
+    this.meta = {}; meta.forEach((v, k) => { this.meta[k] = v && v.value; });
+  },
+  seedDefaults(){
+    const ops = {};
+    ['species','statuses','vaccines'].forEach(c => { ops[c] = Object.entries(LOCAL_DEFAULTS[c]).filter(([id]) => !this.data[c].has(id)).map(([id, doc]) => ({id, doc})); ops[c].forEach(o => this.data[c].set(o.id, Object.assign({}, o.doc, {id:o.id}))); });
+    ops.meta = [{id:'seeded', doc:{value:true}}]; this.meta.seeded = true;
+    return this.writeMany(ops);
+  },
+  changed(){ this.version++; scheduleRender(); },
+  writeMany(opsByStore){
+    if(this.mode === 'memory' || !this.idb) return Promise.resolve(false);
+    const names = Object.keys(opsByStore);
+    return new Promise(res => {
+      let tx;
+      try{ tx = this.idb.transaction(names, 'readwrite'); }catch(e){ this.fail(e); return res(false); }
+      names.forEach(n => { const st = tx.objectStore(n); opsByStore[n].forEach(o => o.doc ? st.put(o.doc, o.id) : st.delete(o.id)); });
+      tx.oncomplete = () => { res(true); if(bc) try{ bc.postMessage(names); }catch(e){} this.askPersist(); };
+      tx.onerror = tx.onabort = () => { this.fail(tx.error); res(false); };
+    });
+  },
+  put(col, id, doc){
+    const body = clone(doc); delete body.id; body.updatedAt = new Date().toISOString();
+    this.data[col].set(id, Object.assign({}, body, {id}));
+    this.changed();
+    return this.writeMany({[col]:[{id, doc:body}]});
+  },
+  del(col, id){
+    this.data[col].delete(id); this.changed();
+    return this.writeMany({[col]:[{id, doc:null}]});
+  },
+  setMeta(k, v){ this.meta[k] = v; return this.writeMany({meta:[{id:k, doc:{value:v}}]}); },
+  fail(err){
+    const k = err && (err.name === 'QuotaExceededError' || /quota/i.test(err.message || '')) ? 'eQuota' : 'eSave';
+    showBanner(k, 'error'); toast(t(k), 5000);
+  },
+  askPersist(){
+    if(this._asked) return; this._asked = true;
+    try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p => { if(!p) navigator.storage.persist(); }).catch(() => {}); }catch(e){}
+  },
+  async getPhoto(id){
+    if(this.photoCache.has(id)) return this.photoCache.get(id);
+    let src = null;
+    if(this.idb){ try{ const v = await idbGet(this.idb, 'photos', id); src = v && v.src || null; }catch(e){ src = null; } }
+    src = safeImg(src) || null;
+    this.photoCache.set(id, src);
+    return src;
+  },
+  setPhoto(id, src){ this.photoCache.set(id, src); return this.writeMany({photos:[{id, doc:{src}}]}); },
+  removePhoto(id){ this.photoCache.set(id, null); return this.writeMany({photos:[{id, doc:null}]}); },
+  async exportAll(){
+    const out = {app:'Herd Book', format:1, exported:new Date().toISOString()};
+    COLS.forEach(c => { out[c] = {}; this.data[c].forEach((d, id) => { const b = Object.assign({}, d); delete b.id; out[c][id] = b; }); });
+    out.photos = {};
+    if(this.idb){ const ph = await idbAll(this.idb, 'photos'); ph.forEach((v, k) => { if(v && safeImg(v.src)) out.photos[k] = v.src; }); }
+    return out;
+  },
+  async importAll(b){
+    const ops = {};
+    for(const n of ['animals','species','statuses','vaccines','photos']){
+      const existing = this.idb ? await idbAll(this.idb, n) : new Map();
+      ops[n] = [...existing.keys()].map(id => ({id, doc:null}));
+    }
+    const norm = x => { if(Array.isArray(x)){ const o = {}; x.forEach(d => { if(d && d.id){ const c = Object.assign({}, d); delete c.id; o[d.id] = c; } }); return o; } return x && typeof x === 'object' ? x : {}; };
+    COLS.forEach(c => { const src = norm(b[c]); const m = new Map(); Object.entries(src).forEach(([id, d]) => { if(d && typeof d === 'object'){ ops[c].push({id, doc:d}); m.set(id, Object.assign({}, d, {id})); } }); this.data[c] = m; });
+    Object.entries(b.photos || {}).forEach(([id, src]) => { if(safeImg(src)) ops.photos.push({id, doc:{src}}); });
+    ops.meta = [{id:'seeded', doc:{value:true}}];
+    this.photoCache.clear();
+    const ok = await this.writeMany(ops);
+    this.changed();
+    return ok;
+  }
+};
+
+/* ---------------- data helpers ---------------- */
+const A = () => [...Store.data.animals.values()];
+const animal = id => id ? Store.data.animals.get(id) : undefined;
+const species = id => id ? Store.data.species.get(id) : undefined;
+const statusDef = id => id ? Store.data.statuses.get(id) : undefined;
+const byOrder = (a,b) => (a.order ?? 99) - (b.order ?? 99) || String(a.name).localeCompare(String(b.name));
+const sortedSpecies = () => [...Store.data.species.values()].sort(byOrder);
+const sortedStatuses = () => [...Store.data.statuses.values()].sort(byOrder);
+const byTag = (a,b) => String(a.tag).localeCompare(String(b.tag), undefined, {numeric:true, sensitivity:'base'});
+const byBirth = (a,b) => (a.birthDate || '9999').localeCompare(b.birthDate || '9999') || byTag(a,b);
+const isActive = a => !(a.statuses || []).some(s => statusDef(s.statusId)?.leavesHerd);
+const activeAnimals = () => A().filter(isActive);
+const attention = a => (a.statuses || []).filter(s => statusDef(s.statusId)?.attention);
+const roleStatus = role => [...Store.data.statuses.values()].find(s => s.role === role);
+const roleOn = (a, role) => (a.statuses || []).find(s => statusDef(s.statusId)?.role === role);
+const spLabel = sp => nm('species', sp);
+const spName = a => spLabel(species(a.speciesId)) || t('animal');
+const spPlural = sp => pluralWord(spLabel(sp) || t('animal'), 2);
+const stLabel = d => d ? nm('statuses', d) : t('unknownStatus');
+const ruleLabel = r => nm('vaccines', r);
+function vxName(v){ const b = v.ruleId && BUILTIN_AR.vaccines[v.ruleId]; return AR() && b && v.name === b.en ? b.ar : v.name; }
+const youngOf = sp => nm('species', sp, 'young') || (AR() ? 'مولود' : 'Offspring');
+const aName = a => tx(a.name || '');
+const label = a => a ? (a.name ? `${a.tag} (${aName(a)})` : a.tag) : '';
+
+let IDX = {v:-1, kids:new Map()};
+function index(){
+  if(IDX.v === Store.version) return IDX;
+  const kids = new Map();
+  A().forEach(a => { [a.damId, a.sireId].forEach(p => { if(p){ if(!kids.has(p)) kids.set(p, []); kids.get(p).push(a); } }); });
+  kids.forEach(list => list.sort(byBirth));
+  IDX = {v:Store.version, kids};
+  return IDX;
+}
+const children = id => index().kids.get(id) || [];
+function siblings(a){
+  const out = new Map();
+  ['damId','sireId'].forEach(k => { if(!a[k]) return; children(a[k]).forEach(s => { if(s.id !== a.id) out.set(s.id, s); }); });
+  return [...out.values()].sort(byBirth).map(s => {
+    const full = a.damId && a.sireId && s.damId === a.damId && s.sireId === a.sireId;
+    const sx = s.sex === 'F' || s.sex === 'M' ? s.sex : 'U';
+    const rel = full ? t('sibFull', {s:sx}) : t('sibHalf', {s:sx, m:!!(a.damId && s.damId === a.damId)});
+    return {s, rel};
+  });
+}
+function descendants(id, seen = new Set()){ children(id).forEach(c => { if(!seen.has(c.id)){ seen.add(c.id); descendants(c.id, seen); } }); return seen; }
+function ancestors(id, seen = new Set()){ const a = animal(id); if(!a) return seen; [a.damId, a.sireId].forEach(p => { if(p && !seen.has(p) && animal(p)){ seen.add(p); ancestors(p, seen); } }); return seen; }
+
+function pregInfo(a){
+  const s = roleOn(a, 'pregnant'); if(!s) return null;
+  const g = Number(species(a.speciesId)?.gestationDays) || 0;
+  return {since:s.since, expected: g && s.since ? addDays(s.since, g) : '', days:g};
+}
+function rulesFor(a){ return [...Store.data.vaccines.values()].filter(r => r.speciesId === a.speciesId && (!r.sex || r.sex === 'all' || r.sex === a.sex)).sort((x,y) => ruleLabel(x).localeCompare(ruleLabel(y))); }
+function nextDue(a, r){
+  const objs = (a.vaccinations || []).filter(v => v.ruleId === r.id && v.date).sort((x,y) => x.date.localeCompare(y.date));
+  if(!objs.length){
+    const due = a.birthDate ? addPeriod(a.birthDate, r.first) : (a.createdAt ? a.createdAt.slice(0,10) : todayISO());
+    return {due, dose:1, never:true};
+  }
+  const last = objs[objs.length-1].date;
+  if(objs.length === 1 && r.booster && r.booster.n && objs[0].course !== 'repeat') return {due:addPeriod(last, r.booster), dose:2, last};
+  if(r.repeat && r.repeat.n) return {due:addPeriod(last, r.repeat), dose:objs.length+1, last, repeat:true};
+  return {done:true, last};
+}
+function doseLabel(r, n){ if(n.dose === 1) return t('dose1'); if(!n.repeat) return t('dose2'); return t('doseR'); }
+function allDue(){
+  const td = todayISO(), out = [];
+  activeAnimals().forEach(a => rulesFor(a).forEach(r => { const n = nextDue(a, r); if(n && !n.done && n.due) out.push({a, r, n, days:diffDays(td, n.due)}); }));
+  return out.sort((x,y) => x.days - y.days || byTag(x.a, y.a));
+}
+
+/* ---------------- shared markup ---------------- */
+const tagHTML = (a, cls = '') => `<span class="tag ${cls}">${esc(a.tag)}</span>`;
+function thumbHTML(a, cls = ''){
+  const src = safeImg(a.thumb);
+  return src ? `<img class="thumb ${cls}" src="${src}" alt="" loading="lazy">` : `<span class="thumb ${cls}" aria-hidden="true">${ico('camera')}</span>`;
+}
+const chip = (color, text) => `<span class="chip c-${esc(color || 'grey')}"><i></i>${esc(text)}</span>`;
+function statusChips(a){ return (a.statuses || []).map(s => { const d = statusDef(s.statusId); return chip(d ? d.color : 'grey', stLabel(d)); }).join(''); }
+function metaLine(a){ return [spName(a), sexWord(a.sex), ageText(a.birthDate)].filter(Boolean).join(' · '); }
+function animalCard(a, opts = {}){
+  const kids = opts.kids ? children(a.id) : [];
+  const past = !isActive(a);
+  const noteS = opts.note ? attention(a)[0] : null;
+  const sp = species(a.speciesId);
+  return `<div class="acard ${past ? 'past' : ''}">
+    <button class="acard-main" data-go="animal/${esc(a.id)}">
+      ${thumbHTML(a)}
+      <span class="acard-body">
+        <span class="acard-top">${tagHTML(a)}${a.name ? `<span class="aname">${esc(aName(a))}</span>` : ''}${past ? `<span class="past-l">${t('past')}</span>` : ''}</span>
+        <span class="meta">${esc(metaLine(a))}</span>
+        ${(a.statuses || []).length ? `<span class="chips">${statusChips(a)}</span>` : ''}
+        ${noteS && noteS.note ? `<span class="acard-note">${esc(tx(noteS.note))}</span>` : ''}
+      </span>
+      ${ico('chev')}
+    </button>
+    ${kids.length ? `<div class="acard-kids"><span class="lbl-sm">${esc(t('kidsLabel', {n:kids.length, plural:pluralWord(youngOf(sp), kids.length)}))}</span>${kids.slice(0,8).map(k => `<button class="kid" data-go="animal/${esc(k.id)}" aria-label="${esc(t('openX', {x:label(k)}))}">${tagHTML(k)}</button>`).join('')}${kids.length > 8 ? `<button class="link" data-go="animal/${esc(a.id)}/family">${esc(t('moreN', {n:kids.length-8}))}</button>` : ''}</div>` : ''}
+  </div>`;
+}
+function vaxRow(d){
+  const cls = d.days < 0 ? 'late' : d.days <= 14 ? 'soon' : 'ok';
+  const txt = d.n.never && d.days < -30 ? t('noRecordYet') : relDays(d.days);
+  return `<div class="vrow">
+    <button class="vrow-main" data-go="animal/${esc(d.a.id)}/vaccines">
+      <span class="vrow-top">${tagHTML(d.a,'tag-sm')}${d.a.name ? `<span class="aname">${esc(aName(d.a))}</span>` : ''}</span>
+      <span class="vname">${esc(ruleLabel(d.r))} <span class="meta">· ${esc(doseLabel(d.r, d.n))}</span></span>
+      <span class="due ${cls}">${esc(txt)} · ${esc(fmtDate(d.n.due))}</span>
+    </button>
+    <button class="btn btn-sm" data-act="giveVax" data-id="${esc(d.a.id)}" data-rule="${esc(d.r.id)}">${t('markGiven')}</button>
+  </div>`;
+}
+
+/* ---------------- ui state & navigation ---------------- */
+const S = { stack:[{s:'home'}], sheetOpen:false, banner:null };
+const cur = () => S.stack[S.stack.length-1];
+const FORM_SCREENS = new Set(['form','rule','type','status']);
+let renderQueued = false;
+function scheduleRender(){
+  if(renderQueued) return; renderQueued = true;
+  requestAnimationFrame(() => { renderQueued = false; if(Store.ready && FORM_SCREENS.has(cur().s) && cur()._shown){ renderTabs(); return; } render(); });
+}
+function parsePath(p){
+  const [a, b, c] = p.split('/');
+  if(a === 'animal') return {s:'animal', id:b, tab:c || 'overview'};
+  if(a === 'edit') return {s:'form', id:b};
+  if(a === 'vaccines') return {s:'vaccines', tab:b || 'due'};
+  if(a === 'rule' || a === 'type' || a === 'status') return {s:a, id:b === 'new' ? null : b, preset:c ? {speciesId:c} : null};
+  return {s:a};
+}
+function go(route, how = {}){
+  if(typeof route === 'string') route = parsePath(route);
+  const top = cur();
+  if(!how.replace) top._scroll = window.scrollY;
+  if(how.root) S.stack = [route];
+  else if(how.replace) S.stack[S.stack.length-1] = route;
+  else S.stack.push(route);
+  render(); window.scrollTo(0, 0);
+}
+function guardLeave(then){
+  const r = cur();
+  if(FORM_SCREENS.has(r.s) && r.dirty){
+    confirmSheet({title:t('leaveQ'), body:t('leaveBody'), yes:t('leaveYes'), no:t('keepEditing'), danger:true, onYes:then});
+  } else then();
+}
+function back(force){
+  const run = () => {
+    if(S.stack.length > 1){ S.stack.pop(); render(); const y = cur()._scroll; if(y != null){ window.scrollTo(0, y); cur()._scroll = null; } }
+  };
+  force ? run() : guardLeave(run);
+}
+function tabGo(tab){
+  guardLeave(() => {
+    if(tab === 'add'){ const root = S.stack[0]; S.stack = [root.s === 'form' ? {s:'animals'} : root, {s:'form'}]; render(); window.scrollTo(0,0); return; }
+    go({s:tab}, {root:true});
+  });
+}
+function setLang(l){
+  LANG = l === 'ar' ? 'ar' : 'en';
+  const h = document.documentElement;
+  h.lang = LANG; h.dir = LANG === 'ar' ? 'rtl' : 'ltr';
+  const m = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if(m) m.content = LANG === 'ar' ? 'سجل القطيع' : 'Herd Book';
+  try{ localStorage.setItem(LS_KEY + ':lang', LANG); }catch(e){}
+}
+
+/* ---------------- chrome ---------------- */
+function renderTop(view){
+  const hasBack = S.stack.length > 1;
+  $('#topbar').innerHTML = `
+    ${hasBack ? `<button class="back" data-act="back">${ico('back')}${t('back')}</button>` : ''}
+    ${view.brand ? `<h1 class="top-title brand"><span class="brand-mark" aria-hidden="true"></span>${t('brand')}</h1>` : `<h1 class="top-title">${esc(view.title)}</h1>`}
+    ${view.right ? `<div class="top-action">${view.right}</div>` : ''}`;
+}
+function renderTabs(){
+  const r = cur(), root = S.stack[0].s;
+  const active = (r.s === 'form' && !r.id) ? 'add' : root === 'form' ? 'animals' : root;
+  const tabs = [['home','tabHome','home'],['animals','tabAnimals','tag'],['add','tabAdd','plus'],['vaccines','tabVaccines','syringe'],['setup','tabSetup','sliders']];
+  $('#tabnav').setAttribute('aria-label', t('nav'));
+  $('#tabbar').innerHTML = tabs.map(([k, l, i]) => `<button class="tab ${k === 'add' ? 'tab-add' : ''}" data-tab="${k}" ${active === k ? 'aria-current="page"' : ''}><span class="tab-ico">${ico(i)}</span>${t(l)}</button>`).join('');
+}
+function showBanner(key, kind = '', act = '', actLabel = ''){ S.banner = {key, kind, act, actLabel}; renderBanner(); }
+function renderBanner(){
+  const b = $('#banner');
+  if(!S.banner){ b.hidden = true; return; }
+  b.innerHTML = `<div class="banner-in ${S.banner.kind}"><span>${esc(t(S.banner.key))}</span>${S.banner.act ? `<button class="btn btn-sm btn-primary" data-act="${S.banner.act}">${esc(t(S.banner.actLabel))}</button>` : ''}</div>`; b.hidden = false;
+}
+let toastT = null;
+function toast(msg, ms = 2600){
+  const el = $('#toast'); el.textContent = msg; el.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, ms);
+}
+const langBtn = () => `<button class="btn btn-sm lang-btn" data-act="lang" data-v="${AR() ? 'en' : 'ar'}" lang="${AR() ? 'en' : 'ar'}" aria-label="${esc(t('otherLangLabel'))}">${t('otherLang')}</button>`;
+
+/* ---------------- render ---------------- */
+function render(){
+  const r = cur();
+  let view;
+  if(!Store.ready){
+    view = {brand:true, right:langBtn(), html:`<div class="loading"><span class="tag">0000</span><p>${t('loading')}</p></div>`};
+  } else {
+    const fn = SCREENS[r.s] || SCREENS.home;
+    view = fn(r);
+  }
+  renderTop(view);
+  renderBanner();
+  $('#main').innerHTML = view.html;
+  renderTabs();
+  if(view.mount) view.mount();
+  r._shown = Store.ready;
+}
+
+/* ---------------- screens ---------------- */
+const SCREENS = {};
+
+SCREENS.home = r => {
+  const act = activeAnimals().sort(byTag);
+  const spCounts = sortedSpecies().map(sp => ({sp, n:act.filter(a => a.speciesId === sp.id).length})).filter(x => x.n);
+  const att = act.filter(a => attention(a).length);
+  const preg = act.map(a => ({a, p:pregInfo(a)})).filter(x => x.p).sort((x,y) => (x.p.expected || '9').localeCompare(y.p.expected || '9'));
+  const due = allDue(), late = due.filter(d => d.days < 0), soon = due.filter(d => d.days >= 0 && d.days <= 14);
+  const samples = A().filter(a => a.sample).length;
+  r.type = r.type && (r.type === 'all' || spCounts.some(x => x.sp.id === r.type)) ? r.type : 'all';
+  const herd = r.type === 'all' ? act : act.filter(a => a.speciesId === r.type);
+  const pregRole = roleStatus('pregnant');
+  let dateStr = '';
+  try{ dateStr = new Date().toLocaleDateString(locale(), {weekday:'long',day:'numeric',month:'long',year:'numeric'}); }catch(e){ dateStr = todayISO(); }
+
+  const html = `
+    <p class="today">${esc(dateStr)}</p>
+    <button class="btn btn-primary btn-block btn-lg" data-act="addNew">${ico('plus')}${t('registerNew')}</button>
+    ${samples ? `<div class="notice"><p>${t('sampleNote')}</p><div><button class="btn btn-sm" data-act="clearSamples">${t('removeSamples')}</button></div></div>` : ''}
+    ${backupReminder()}
+    ${installCard()}
+    <div class="tiles">
+      <button class="tile" data-act="filterAnimals" data-f="all"><span class="tile-num">${act.length}</span><span class="tile-label">${t('inHerd')}</span><span class="tile-sub">${spCounts.map(x => esc(t('spCount', {n:x.n, plural:pluralWord(spLabel(x.sp), x.n), name:spLabel(x.sp)}))).join(' · ') || t('noAnimalsYet')}</span></button>
+      <button class="tile ${att.length ? 'is-alert' : ''}" data-act="filterAnimals" data-f="attention"><span class="tile-num">${att.length}</span><span class="tile-label">${t('needAttention')}</span><span class="tile-sub">${att.length ? t('attnSub') : t('nothingCheck')}</span></button>
+      <button class="tile" data-act="filterAnimals" data-f="${pregRole ? esc(pregRole.id) : 'any'}"><span class="tile-num">${preg.length}</span><span class="tile-label">${t('pregnantTile')}</span><span class="tile-sub">${preg[0] && preg[0].p.expected ? esc(t('nextBirth', {d:fmtDate(preg[0].p.expected)})) : t('noneRecorded')}</span></button>
+      <button class="tile ${late.length ? 'is-alert' : soon.length ? 'is-warn' : ''}" data-go="vaccines"><span class="tile-num">${late.length + soon.length}</span><span class="tile-label">${t('vaxDue')}</span><span class="tile-sub ${late.length ? 'strong' : ''}">${late.length ? t('nLate', {n:late.length}) : ''}${t('nSoon', {n:soon.length})}</span></button>
+    </div>
+
+    ${att.length ? `<section class="sec"><div class="sec-h"><h2>${t('needsAttention')}</h2></div><div class="alist">${att.map(a => animalCard(a, {note:true})).join('')}</div></section>` : ''}
+
+    ${(late.length || soon.length) ? `<section class="sec"><div class="sec-h"><h2>${t('vaxDue')}</h2><button class="link" data-go="vaccines">${t('seeAll')}</button></div><div class="vlist">${[...late, ...soon].slice(0,5).map(vaxRow).join('')}</div></section>` : ''}
+
+    ${preg.length ? `<section class="sec"><div class="sec-h"><h2>${t('expecting')}</h2></div><div class="vlist">${preg.map(({a,p}) => {
+      const d = p.expected ? diffDays(todayISO(), p.expected) : null;
+      return `<div class="vrow"><button class="vrow-main" data-go="animal/${esc(a.id)}/status"><span class="vrow-top">${tagHTML(a,'tag-sm')}${a.name ? `<span class="aname">${esc(aName(a))}</span>` : ''}<span class="meta">${esc(spName(a))}</span></span><span class="due ${d !== null && d < 0 ? 'late' : d !== null && d <= 14 ? 'soon' : 'ok'}">${p.expected ? esc(t('birthAbout', {d:fmtDate(p.expected)})) + ' · ' + esc(whenText(d)) : t('pregnantWord')}</span></button></div>`;
+    }).join('')}</div></section>` : ''}
+
+    <section class="sec">
+      <div class="sec-h"><h2>${t('yourHerd')}</h2><span class="count">${esc(t('animalsN', {n:herd.length}))}</span></div>
+      ${spCounts.length > 1 ? `<div class="fchips" role="group" aria-label="${esc(t('showType'))}">
+        <button class="fchip" data-act="homeType" data-v="all" aria-pressed="${r.type === 'all'}">${t('all')} <span class="n">${act.length}</span></button>
+        ${spCounts.map(x => `<button class="fchip" data-act="homeType" data-v="${esc(x.sp.id)}" aria-pressed="${r.type === x.sp.id}">${esc(spLabel(x.sp))} <span class="n">${x.n}</span></button>`).join('')}
+      </div>` : ''}
+      ${herd.length ? `<div class="alist">${herd.map(a => animalCard(a, {kids:true})).join('')}</div>` : `<p class="empty-note">${t('emptyHerd')}</p>${A().length ? '' : `<div class="notice"><p><b>${t('tryFirst')}</b> ${esc(t('loadSamplesHint', {n:Object.keys(SAMPLE_ANIMALS).length}))}</p><div><button class="btn btn-sm" data-act="loadSamples">${t('loadSamples')}</button></div></div>`}`}
+    </section>`;
+  return {brand:true, right:langBtn(), html};
+};
+
+SCREENS.animals = r => {
+  r.type = r.type || 'all'; r.st = r.st || 'any'; r.q = r.q || '';
+  const all = A();
+  const counts = sortedSpecies().map(sp => ({sp, n:all.filter(a => a.speciesId === sp.id && (r.past || isActive(a))).length}));
+  const html = `
+    <div class="filter-row">
+      <div class="searchbox">${ico('search')}<label for="a-q" class="sr-only">${t('searchLbl')}</label><input id="a-q" class="input" type="search" dir="auto" placeholder="${esc(t('searchPh'))}" value="${esc(r.q)}" autocomplete="off" spellcheck="false"></div>
+      <div class="fchips" role="group" aria-label="${esc(t('typeLbl'))}">
+        <button class="fchip" data-act="animalsType" data-v="all" aria-pressed="${r.type === 'all'}">${t('allTypes')}</button>
+        ${counts.map(x => `<button class="fchip" data-act="animalsType" data-v="${esc(x.sp.id)}" aria-pressed="${r.type === x.sp.id}">${esc(spLabel(x.sp))} <span class="n">${x.n}</span></button>`).join('')}
+      </div>
+      <div class="field"><label class="lbl" for="a-st">${t('statusLbl')}</label>
+        <select id="a-st" class="input">
+          <option value="any" ${r.st === 'any' ? 'selected' : ''}>${t('anyStatus')}</option>
+          <option value="attention" ${r.st === 'attention' ? 'selected' : ''}>${t('needsAttention')}</option>
+          <option value="none" ${r.st === 'none' ? 'selected' : ''}>${t('noStatus')}</option>
+          ${sortedStatuses().map(s => `<option value="${esc(s.id)}" ${r.st === s.id ? 'selected' : ''}>${esc(stLabel(s))}</option>`).join('')}
+        </select>
+      </div>
+      <label class="check" for="a-past"><input type="checkbox" id="a-past" ${r.past ? 'checked' : ''}><span><b>${t('showPast')}</b><span class="hint">${t('showPastHint')}</span></span></label>
+    </div>
+    <div class="sec" style="margin-top:1.2rem"><div class="sec-h"><h2 id="a-count"></h2></div><div class="alist" id="a-list"></div></div>`;
+  const draw = () => {
+    let list = A();
+    const stD = statusDef(r.st);
+    if(!r.past && !(stD && stD.leavesHerd)) list = list.filter(isActive);
+    if(r.type !== 'all') list = list.filter(a => a.speciesId === r.type);
+    if(r.st === 'attention') list = list.filter(a => attention(a).length);
+    else if(r.st === 'none') list = list.filter(a => !(a.statuses || []).length);
+    else if(r.st !== 'any') list = list.filter(a => (a.statuses || []).some(s => s.statusId === r.st));
+    const q = r.q.trim().toLowerCase();
+    if(q) list = list.filter(a => String(a.tag).toLowerCase().includes(q) || String(a.name || '').toLowerCase().includes(q) || aName(a).toLowerCase().includes(q));
+    list.sort(byTag);
+    $('#a-count').textContent = t('animalsN', {n:list.length});
+    $('#a-list').innerHTML = list.length ? list.map(a => animalCard(a, {kids:true})).join('') : `<p class="empty-note">${t('noMatch')} ${q ? t('noMatchQ') : t('noMatchF')}</p>`;
+  };
+  return {title:t('animalsTitle'), html, right:`<button class="btn btn-sm btn-primary" data-act="addNew">${ico('plus')}${t('add')}</button>`, mount(){
+    draw();
+    $('#a-q').addEventListener('input', e => { r.q = e.target.value; draw(); });
+    $('#a-st').addEventListener('change', e => { r.st = e.target.value; draw(); });
+    $('#a-past').addEventListener('change', e => { r.past = e.target.checked; draw(); });
+  }};
+};
+
+SCREENS.animal = r => {
+  const a = animal(r.id);
+  if(!a) return {title:t('notFound'), html:`<p class="empty-note">${t('goneAnimal')}</p><div class="mt"><button class="btn" data-act="back">${t('goBack')}</button></div>`};
+  const tabs = [['overview','tOverview'],['family','tFamily'],['status','tStatus'],['vaccines','tVaccines']];
+  const kidsN = children(a.id).length;
+  const head = `
+    <div class="phead">
+      <button class="photo-lg" data-act="${a.hasPhoto ? 'viewPhoto' : 'editAnimal'}" data-id="${esc(a.id)}" aria-label="${esc(a.hasPhoto ? t('viewPhoto') : t('addPhoto'))}">
+        ${safeImg(a.thumb) ? `<img id="p-photo" src="${safeImg(a.thumb)}" alt="${esc(t('photoOf', {x:label(a)}))}">` : `<span class="ph">${ico('camera')}${t('addPhoto')}</span>`}
+      </button>
+      <div class="phead-b">
+        <div>${tagHTML(a,'tag-lg')}</div>
+        ${a.name ? `<h2 class="pname">${esc(aName(a))}</h2>` : ''}
+        <p class="pmeta">${esc(metaLine(a))}</p>
+        <div class="chips">${(a.statuses || []).length ? statusChips(a) : `<span class="meta">${t('noCurrentStatus')}</span>`}${!isActive(a) ? `<span class="past-l">${t('pastAnimal')}</span>` : ''}</div>
+      </div>
+    </div>
+    <div class="subtabs" role="tablist" id="subtabs">${tabs.map(([k,l]) => `<button class="subtab" role="tab" data-act="atab" data-v="${k}" aria-selected="${r.tab === k}">${t(l)}${k === 'family' && kidsN ? ` (${kidsN})` : ''}</button>`).join('')}</div>`;
+  const panel = ({overview:panelOverview, family:panelFamily, status:panelStatus, vaccines:panelVaccines}[r.tab] || panelOverview)(a);
+  return {title:a.tag, right:`<button class="btn btn-sm" data-act="editAnimal" data-id="${esc(a.id)}">${ico('pencil')}${t('edit')}</button>`, html: head + `<div class="panel" role="tabpanel">${panel}</div>`, mount(){
+    if(a.hasPhoto){ Store.getPhoto(a.id).then(src => { const img = $('#p-photo'); if(src && img && cur().id === a.id) img.src = src; }); }
+  }};
+};
+
+function panelOverview(a){
+  const dam = animal(a.damId), sire = animal(a.sireId), p = pregInfo(a);
+  const nexts = isActive(a) ? rulesFor(a).map(r => ({r, n:nextDue(a, r)})).filter(x => x.n && !x.n.done).sort((x,y) => x.n.due.localeCompare(y.n.due)) : [];
+  const nx = nexts[0];
+  const young = youngOf(species(a.speciesId));
+  const parentLink = (x, isM) => x ? `<button class="btn-inline" data-go="animal/${esc(x.id)}">${tagHTML(x,'tag-sm')}${x.name ? esc(aName(x)) : ''}</button>` : `<button class="link" data-act="${isM ? 'linkDam' : 'linkSire'}" data-id="${esc(a.id)}">${isM ? t('linkMother') : t('linkFather')}</button>`;
+  const muted = s => `<span class="meta">${s}</span>`;
+  const rows = [
+    [t('rId'), tagHTML(a,'tag-sm')],
+    [t('rName'), a.name ? esc(aName(a)) : muted(t('notSet'))],
+    [t('rType'), esc(spName(a))],
+    [t('rSex'), sexWord(a.sex) || muted(t('notSet'))],
+    [t('rBorn'), a.birthDate ? `${esc(fmtDate(a.birthDate))}<br><span class="meta">${esc(t('ageOld', {a:ageText(a.birthDate)}))}</span>` : muted(t('notKnown'))],
+    [t('rBreed'), a.breed ? esc(tx(a.breed)) : muted(t('notSet'))],
+    [t('rMother'), parentLink(dam, true)],
+    [t('rFather'), parentLink(sire, false)],
+    [t('rReg'), esc(fmtDate((a.createdAt || '').slice(0,10)))],
+    [t('rNotes'), a.notes ? `<span dir="auto">${esc(tx(a.notes)).replace(/\n/g,'<br>')}</span>` : muted(t('none'))]
+  ];
+  const nd = nx ? diffDays(todayISO(), nx.n.due) : 0;
+  return `
+    <div class="qa">
+      <button class="btn" data-act="addStatus" data-id="${esc(a.id)}">${ico('pulse')}${t('addStatus')}</button>
+      <button class="btn" data-act="giveVax" data-id="${esc(a.id)}">${ico('syringe')}${t('recordVax')}</button>
+      ${a.sex === 'F' || a.sex === 'M' ? `<button class="btn" data-act="addOffspring" data-id="${esc(a.id)}">${ico('family')}${esc(t('registerYoung', {y:young}))}</button>` : `<button class="btn" data-go="animal/${esc(a.id)}/family">${ico('family')}${t('tFamily')}</button>`}
+      <button class="btn" data-act="editAnimal" data-id="${esc(a.id)}">${ico('pencil')}${t('editDetails')}</button>
+    </div>
+    ${p ? `<div class="callout c-purple"><strong>${esc(t('pregnantSince', {d:fmtDate(p.since)}))}</strong><p>${p.expected ? t('pregExpect', {d:esc(fmtDate(p.expected)), w:esc(whenText(diffDays(todayISO(), p.expected))), g:esc(AR() ? countUnit(p.days,'day') : p.days)}) : t('pregNoLen')}</p></div>` : ''}
+    ${nx ? `<button class="vrow" data-go="animal/${esc(a.id)}/vaccines"><span class="vrow-main"><span class="lbl-sm">${t('nextVax')}</span><span class="vname">${esc(ruleLabel(nx.r))}</span><span class="due ${nd < 0 ? 'late' : nd <= 14 ? 'soon' : 'ok'}">${esc(nx.n.never && nd < -30 ? t('noRecordYet') : relDays(nd))} · ${esc(fmtDate(nx.n.due))}</span></span>${ico('chev')}</button>` : ''}
+    <h3>${t('details')}</h3>
+    <dl class="dl">${rows.map(([k,v]) => `<div class="dl-row"><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+}
+
+function famNode(x, role){
+  return `<button class="node" data-go="animal/${esc(x.id)}/family">${thumbHTML(x,'sm')}<span class="node-b"><span class="node-role">${esc(role)}</span>${tagHTML(x,'tag-sm')}${x.name ? `<span class="node-name">${esc(aName(x))}</span>` : ''}${!isActive(x) ? `<span class="past-l">${t('past')}</span>` : ''}</span></button>`;
+}
+function panelFamily(a){
+  const dam = animal(a.damId), sire = animal(a.sireId);
+  const gps = [[t('mm'), dam && animal(dam.damId)],[t('mf'), dam && animal(dam.sireId)],[t('fm'), sire && animal(sire.damId)],[t('ff'), sire && animal(sire.sireId)]].filter(x => x[1]);
+  const kids = children(a.id), sibs = siblings(a);
+  const yw = youngOf(species(a.speciesId));
+  const emptyParent = (isM) => { const who = isM ? t('rMother') : t('rFather'); return `<button class="node empty" data-act="${isM ? 'linkDam' : 'linkSire'}" data-id="${esc(a.id)}"><span class="node-role">${who}</span><span>${t('notRecorded')}</span><span class="node-add">${esc(t('plusLink', {who}))}</span></button>`; };
+  const kidRole = k => { const w = k.sex === 'F' ? t('daughter') : k.sex === 'M' ? t('son') : yw; return k.birthDate ? t('bornOn', {w, d:fmtDate(k.birthDate)}) : w; };
+  return `<div class="tree">
+    ${gps.length ? `<div class="tier"><h3 class="tier-label">${t('grandparents')}</h3><div class="pair">${gps.map(([rl, x]) => famNode(x, rl)).join('')}</div></div><div class="stem"></div>` : ''}
+    <div class="tier"><h3 class="tier-label">${t('parents')}</h3><div class="pair">
+      ${dam ? famNode(dam, t('rMother')) : emptyParent(true)}
+      ${sire ? famNode(sire, t('rFather')) : emptyParent(false)}
+    </div></div>
+    <div class="stem"></div>
+    <div class="node self">${thumbHTML(a,'sm')}<span class="node-b"><span class="node-role">${t('thisAnimal')}</span>${tagHTML(a,'tag-sm')}${a.name ? `<span class="node-name">${esc(aName(a))}</span>` : ''}</span></div>
+    <div class="stem"></div>
+    <div class="tier"><h3 class="tier-label">${esc(t('offspringTier', {n:kids.length, plural:pluralWord(yw, kids.length)}))}</h3>
+      ${kids.length ? `<div class="kids-grid">${kids.map(k => famNode(k, kidRole(k))).join('')}</div>` : `<p class="empty-note">${t('noOffspring')}</p>`}
+      <div class="btn-row">
+        ${a.sex === 'F' || a.sex === 'M' ? `<button class="btn btn-primary" data-act="addOffspring" data-id="${esc(a.id)}">${ico('plus')}${esc(t('registerNewYoung', {y:yw}))}</button>
+        <button class="btn" data-act="linkChild" data-id="${esc(a.id)}">${t('linkExisting')}</button>` : `<p class="hint">${t('setSexFirst')}</p>`}
+      </div>
+    </div>
+    ${sibs.length ? `<div class="tier" style="margin-top:1.6rem"><h3 class="tier-label">${t('siblings')}</h3><div class="kids-grid">${sibs.map(({s, rel}) => famNode(s, rel)).join('')}</div></div>` : ''}
+  </div>`;
+}
+
+function panelStatus(a){
+  const now = a.statuses || [];
+  const log = [...(a.statusLog || [])].reverse();
+  const p = pregInfo(a);
+  return `
+    <button class="btn btn-primary btn-block btn-lg" data-act="addStatus" data-id="${esc(a.id)}">${ico('plus')}${t('addStatus')}</button>
+    <h3>${t('currentStatus')}</h3>
+    ${now.length ? `<div class="stlist">${now.map(s => {
+      const d = statusDef(s.statusId);
+      const since = s.since ? t('sinceN', {d:fmtDate(s.since), n:countUnit(Math.max(0, diffDays(s.since, todayISO())), 'day')}) : '';
+      const extra = d && d.role === 'pregnant' && p && p.expected ? `<span class="meta">${esc(t('birthExpectedShort', {d:fmtDate(p.expected)}))}</span>` : '';
+      return `<div class="strow"><div class="strow-b"><div class="chips">${chip(d ? d.color : 'grey', stLabel(d))}</div><span class="meta">${esc(since)}</span>${extra}${s.note ? `<span class="t-note" dir="auto">${esc(tx(s.note))}</span>` : ''}</div><button class="btn btn-sm" data-act="removeStatus" data-id="${esc(a.id)}" data-st="${esc(s.statusId)}">${t('remove')}</button></div>`;
+    }).join('')}</div>` : `<p class="empty-note">${t('noStatusNow')}</p>`}
+    <h3>${t('history')}</h3>
+    ${log.length ? `<ul class="timeline">${log.map(e => {
+      const d = statusDef(e.statusId); const name = d ? stLabel(d) : (e.name || t('deletedStatus'));
+      return `<li><span class="t-date">${esc(fmtDate(e.date))}</span><span class="t-body"><span><b>${e.action === 'removed' ? t('removedW') : t('addedW')}</b> ${chip(d ? d.color : 'grey', name)}</span>${e.note ? `<span class="t-note" dir="auto">${esc(tx(e.note))}</span>` : ''}</span><span></span></li>`;
+    }).join('')}</ul>` : `<p class="empty-note">${t('noStatusChanges')}</p>`}`;
+}
+
+function panelVaccines(a){
+  const active = isActive(a);
+  const rules = rulesFor(a);
+  const recs = [...(a.vaccinations || [])].sort((x,y) => (y.date || '').localeCompare(x.date || ''));
+  const td = todayISO();
+  const sp = species(a.speciesId);
+  const dueRows = rules.map(r => {
+    const n = nextDue(a, r);
+    if(n.done) return `<div class="vrow"><div class="vrow-main"><span class="vname">${esc(ruleLabel(r))}</span><span class="due ok">${esc(t('allDoses', {d:fmtDate(n.last)}))}</span></div><span></span></div>`;
+    const d = diffDays(td, n.due);
+    const txt = n.never && d < -30 ? t('noRecordYet') : relDays(d);
+    return `<div class="vrow"><div class="vrow-main"><span class="vname">${esc(ruleLabel(r))} <span class="meta">· ${esc(doseLabel(r, n))}</span></span><span class="due ${d < 0 ? 'late' : d <= 14 ? 'soon' : 'ok'}">${esc(txt)} · ${esc(fmtDate(n.due))}</span>${n.last ? `<span class="meta">${esc(t('lastGiven', {d:fmtDate(n.last)}))}</span>` : ''}</div><button class="btn btn-sm" data-act="giveVax" data-id="${esc(a.id)}" data-rule="${esc(r.id)}">${t('markGiven')}</button></div>`;
+  }).join('');
+  return `
+    <button class="btn btn-primary btn-block btn-lg" data-act="giveVax" data-id="${esc(a.id)}">${ico('syringe')}${t('recordAVax')}</button>
+    <h3>${t('reminders')}</h3>
+    ${!active ? `<p class="empty-note">${t('remindersOff')}</p>` :
+      rules.length ? `<div class="vlist">${dueRows}</div>` : `<p class="empty-note">${esc(t('noRulesFor', {plural:spPlural(sp), name:spName(a)}))} <button class="link" data-go="rule/new/${esc(a.speciesId)}">${t('addVaxRuleLink')}</button></p>`}
+    ${a.birthDate ? '' : (active && rules.length ? `<p class="hint">${t('addBirthHint')}</p>` : '')}
+    <h3>${t('vaxGiven')}</h3>
+    ${recs.length ? `<ul class="timeline">${recs.map(v => `<li><span class="t-date">${esc(fmtDate(v.date))}</span><span class="t-body"><b dir="auto">${esc(vxName(v))}</b>${v.note ? `<span class="t-note" dir="auto">${esc(tx(v.note))}</span>` : ''}</span><button class="icon-btn" data-act="delVax" data-id="${esc(a.id)}" data-v="${esc(v.id)}" aria-label="${esc(t('delRecord'))}">${ico('trash')}</button></li>`).join('')}</ul>` : `<p class="empty-note">${t('noVaxYet')}</p>`}`;
+}
+
+/* ---- animal form ---- */
+SCREENS.form = r => {
+  const editing = !!r.id, a = editing ? animal(r.id) : null;
+  if(editing && !a) return {title:t('notFound'), html:`<p class="empty-note">${t('goneAnimal')}</p>`};
+  if(!r.draft){
+    const pre = r.preset || {};
+    r.draft = a ? {tag:a.tag, name:a.name || '', speciesId:a.speciesId, sex:a.sex || '', birthDate:a.birthDate || '', breed:a.breed || '', damId:a.damId || '', sireId:a.sireId || '', notes:a.notes || '', thumb:a.thumb || '', photoFull:null, photoChanged:false, hadPhoto:!!a.hasPhoto, markMother:true}
+      : {tag:'', name:'', speciesId:pre.speciesId || (Store.data.species.size === 1 ? sortedSpecies()[0].id : ''), sex:'', birthDate:'', breed:pre.breed || '', damId:pre.damId || '', sireId:pre.sireId || '', notes:'', thumb:'', photoFull:null, photoChanged:false, hadPhoto:false, markMother:true};
+  }
+  const d = r.draft;
+  const dam = animal(d.damId), sire = animal(d.sireId);
+  const birthRole = roleStatus('birth'), pregRole = roleStatus('pregnant');
+  const showMark = () => !editing && !!animal(d.damId) && !!birthRole && d.birthDate && diffDays(d.birthDate, todayISO()) <= 14 && diffDays(d.birthDate, todayISO()) >= 0;
+  const parentBtn = (x, isM) => `<div class="parent-pick"><span class="lbl-sm">${isM ? t('rMother') : t('rFather')}</span><div class="parent-line">
+      <button type="button" class="pbtn" data-act="${isM ? 'pickDam' : 'pickSire'}">${x ? `${thumbHTML(x,'sm')}<span class="node-b">${tagHTML(x,'tag-sm')}${x.name ? `<span class="node-name">${esc(aName(x))}</span>` : ''}</span>` : `<span class="choose">${isM ? t('chooseMother') : t('chooseFather')}</span>`}</button>
+      ${x ? `<button type="button" class="btn btn-sm" data-act="${isM ? 'clearDam' : 'clearSire'}">${t('remove')}</button>` : ''}
+    </div></div>`;
+  const html = `
+    <form id="aform" class="form" novalidate>
+      <div class="err" id="f-err" hidden></div>
+      <div class="field"><span class="lbl">${t('photo')}</span>
+        <div class="photo-edit">
+          <div class="photo-prev">${safeImg(d.thumb) ? `<img src="${safeImg(d.thumb)}" alt="${esc(t('photoPreview'))}">` : ico('camera')}</div>
+          <div class="photo-btns">
+            <label class="btn" for="f-photo">${ico('camera')}${d.thumb ? t('changePhoto') : t('addPhoto')}</label>
+            <input type="file" id="f-photo" accept="image/*" class="sr-only">
+            ${d.thumb ? `<button type="button" class="btn btn-sm" data-act="dropPhoto">${t('removePhoto')}</button>` : ''}
+            <span class="hint" id="photo-status">${t('photoHint')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label class="lbl" for="f-tag">${t('rId')} <span class="req">${t('required')}</span></label>
+        <input id="f-tag" name="tag" class="input input-tag" value="${esc(d.tag)}" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="f-tag-h">
+        <span class="hint" id="f-tag-h">${t('tagHint')}</span></div>
+      <div class="field"><label class="lbl" for="f-name">${t('rName')} <span class="req">${t('optional')}</span></label>
+        <input id="f-name" name="name" class="input" dir="auto" value="${esc(d.name)}" autocomplete="off"></div>
+      <fieldset class="field" id="f-species"><legend class="lbl">${t('rType')} <span class="req">${t('required')}</span></legend>
+        <div class="opts">${sortedSpecies().map(sp => `<label class="opt"><input type="radio" name="speciesId" value="${esc(sp.id)}" ${d.speciesId === sp.id ? 'checked' : ''}><span>${esc(spLabel(sp))}</span></label>`).join('')}</div>
+        ${Store.data.species.size ? '' : `<p class="hint">${t('noTypesYet')} <button type="button" class="link" data-go="type/new">${t('addAType')}</button></p>`}</fieldset>
+      <fieldset class="field"><legend class="lbl">${t('rSex')}</legend>
+        <div class="opts">${[['F','female'],['M','male'],['U','notSure']].map(([v,l]) => `<label class="opt"><input type="radio" name="sex" value="${v}" ${d.sex === v ? 'checked' : ''}><span>${t(l)}</span></label>`).join('')}</div></fieldset>
+      <div class="field"><label class="lbl" for="f-birth">${t('birthDate')}</label>
+        <div class="row"><input type="date" id="f-birth" name="birthDate" class="input" value="${esc(d.birthDate)}" max="${todayISO()}"><button type="button" class="btn" data-act="birthToday">${t('today')}</button></div>
+        <span class="hint">${t('birthHint')}</span></div>
+      <div class="field"><label class="lbl" for="f-breed">${t('breedOpt')} <span class="req">${t('optional')}</span></label>
+        <input id="f-breed" name="breed" class="input" dir="auto" value="${esc(d.breed)}" autocomplete="off"></div>
+      <fieldset class="field"><legend class="lbl">${t('parents')}</legend>
+        ${parentBtn(dam, true)}
+        ${parentBtn(sire, false)}
+        <span class="hint">${t('parentsHint')}</span></fieldset>
+      <label class="check" for="f-mark" id="f-mark-wrap" ${showMark() ? '' : 'hidden'}><input type="checkbox" id="f-mark" name="markMother" ${d.markMother ? 'checked' : ''}><span><b>${esc(t('markMother', {s:birthRole ? stLabel(birthRole) : ''}))}</b><span class="hint">${esc(t('markMotherHint', {p:pregRole ? stLabel(pregRole) : ''}))}</span></span></label>
+      <div class="field"><label class="lbl" for="f-notes">${t('rNotes')} <span class="req">${t('optional')}</span></label>
+        <textarea id="f-notes" name="notes" class="input" dir="auto" placeholder="${esc(t('notesPh'))}">${esc(d.notes)}</textarea></div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg">${editing ? t('saveChanges') : t('saveAnimal')}</button>
+      ${editing ? `<button type="button" class="btn btn-danger btn-block" data-act="deleteAnimal" data-id="${esc(a.id)}">${ico('trash')}${t('deleteAnimal')}</button>` : ''}
+    </form>`;
+  return {title: editing ? t('editX', {x:a.tag}) : t('registerAnimal'), html, mount(){
+    const f = $('#aform');
+    const onField = e => {
+      const el = e.target; if(!el.name) return;
+      r.dirty = true;
+      if(el.type === 'radio'){ if(!el.checked) return; d[el.name] = el.value; }
+      else if(el.type === 'checkbox') d[el.name] = el.checked;
+      else d[el.name] = el.value;
+      if(el.name === 'speciesId'){
+        let cleared = false;
+        if(d.damId && animal(d.damId)?.speciesId !== d.speciesId){ d.damId = ''; cleared = true; }
+        if(d.sireId && animal(d.sireId)?.speciesId !== d.speciesId){ d.sireId = ''; cleared = true; }
+        if(cleared){ render(); toast(t('parentsCleared')); }
+      }
+      if(el.name === 'birthDate'){ $('#f-mark-wrap').hidden = !showMark(); }
+    };
+    f.addEventListener('input', onField);
+    f.addEventListener('change', onField);
+    f.addEventListener('submit', e => { e.preventDefault(); saveAnimal(r); });
+    $('#f-photo').addEventListener('change', async e => {
+      const file = e.target.files && e.target.files[0]; if(!file) return;
+      $('#photo-status').textContent = t('preparingPhoto');
+      try{
+        const {full, thumb} = await processPhoto(file);
+        d.thumb = thumb; d.photoFull = full; d.photoChanged = true; r.dirty = true; render();
+      }catch(err){ $('#photo-status').textContent = t('badPhoto'); }
+    });
+  }};
+};
+
+function loadImg(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => { res(img); setTimeout(() => URL.revokeObjectURL(url), 2000); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+    img.src = url;
+  });
+}
+function toJpeg(img, maxSide, q, square){
+  let sw = img.naturalWidth, sh = img.naturalHeight, sx = 0, sy = 0;
+  if(square){ const s = Math.min(sw, sh); sx = (sw - s)/2; sy = (sh - s)/2; sw = sh = s; }
+  const scale = Math.min(1, maxSide / Math.max(sw, sh));
+  const w = Math.max(1, Math.round(sw*scale)), h = Math.max(1, Math.round(sh*scale));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+  return c.toDataURL('image/jpeg', q);
+}
+async function processPhoto(file){
+  const img = await loadImg(file);
+  let full = toJpeg(img, 1000, .78);
+  if(full.length > 190000) full = toJpeg(img, 760, .7);
+  if(full.length > 190000) full = toJpeg(img, 560, .62);
+  const thumb = toJpeg(img, 150, .7, true);
+  return {full, thumb};
+}
+
+function saveAnimal(r){
+  const d = r.draft, errs = [];
+  const tag = String(d.tag || '').trim();
+  if(!tag) errs.push(['f-tag', t('enterId')]);
+  else {
+    const dup = A().find(x => x.id !== r.id && String(x.tag).trim().toLowerCase() === tag.toLowerCase());
+    if(dup) errs.push(['f-tag', t('idUsed', {tag, who:label(dup), sp:spName(dup)})]);
+  }
+  if(!d.speciesId || !species(d.speciesId)) errs.push(['f-species', t('chooseType')]);
+  if(d.birthDate && d.birthDate > todayISO()) errs.push(['f-birth', t('futureBirth')]);
+  const box = $('#f-err');
+  document.querySelectorAll('.input.bad').forEach(x => x.classList.remove('bad'));
+  if(errs.length){
+    box.innerHTML = `${esc(t('fixBefore', {n:errs.length}))}<ul>${errs.map(e => `<li>${esc(e[1])}</li>`).join('')}</ul>`;
+    box.hidden = false;
+    errs.forEach(([id]) => { const el = document.getElementById(id); if(el && el.classList.contains('input')) el.classList.add('bad'); });
+    box.scrollIntoView({block:'center'});
+    return;
+  }
+  const id = r.id || uid('a');
+  const base = r.id ? clone(animal(r.id)) : {createdAt:new Date().toISOString(), statuses:[], statusLog:[], vaccinations:[]};
+  Object.assign(base, {tag, name:String(d.name || '').trim(), speciesId:d.speciesId, sex:d.sex || 'U', birthDate:d.birthDate || '', breed:String(d.breed || '').trim(), damId:d.damId || '', sireId:d.sireId || '', notes:String(d.notes || '').trim(), thumb:d.thumb || '', hasPhoto:!!d.thumb});
+  Store.put('animals', id, base);
+  if(d.photoChanged){ if(d.photoFull) Store.setPhoto(id, d.photoFull); else if(d.hadPhoto) Store.removePhoto(id); }
+  const markEl = $('#f-mark-wrap');
+  if(!r.id && d.damId && d.markMother && markEl && !markEl.hidden){
+    const br = roleStatus('birth'), mom = animal(d.damId);
+    if(br && mom && !(mom.statuses || []).some(s => s.statusId === br.id)) applyStatus(mom.id, br.id, d.birthDate || todayISO(), t('gaveBirthTo', {x:tag}));
+  }
+  toast(r.id ? t('changesSaved') : t('xSaved', {x:tag}));
+  r.dirty = false;
+  if(r.id){ back(true); }
+  else { S.stack[S.stack.length-1] = {s:'animal', id, tab:'overview'}; render(); window.scrollTo(0,0); }
+}
+
+/* ---- status mutations ---- */
+function applyStatus(aid, stId, date, note){
+  const a = clone(animal(aid)), st = statusDef(stId); if(!a || !st) return;
+  a.statuses = a.statuses || []; a.statusLog = a.statusLog || [];
+  const log = (sid, action, nt) => a.statusLog.push({statusId:sid, name:statusDef(sid)?.name || '', action, date, note:nt || ''});
+  if(st.leavesHerd){ a.statuses.forEach(s => log(s.statusId, 'removed', t('clearedWhen', {s:stLabel(st)}))); a.statuses = []; }
+  if(st.role === 'birth'){ const p = a.statuses.find(s => statusDef(s.statusId)?.role === 'pregnant'); if(p){ a.statuses = a.statuses.filter(s => s !== p); log(p.statusId, 'removed', t('gaveBirth')); } }
+  a.statuses = a.statuses.filter(s => s.statusId !== stId);
+  a.statuses.push({statusId:stId, since:date, note:note || ''});
+  log(stId, 'added', note);
+  if(a.statusLog.length > 300) a.statusLog = a.statusLog.slice(-300);
+  Store.put('animals', aid, a);
+}
+function dropStatus(aid, stId, date, note){
+  const a = clone(animal(aid)); if(!a) return;
+  a.statuses = (a.statuses || []).filter(s => s.statusId !== stId);
+  a.statusLog = a.statusLog || [];
+  a.statusLog.push({statusId:stId, name:statusDef(stId)?.name || '', action:'removed', date, note:note || ''});
+  Store.put('animals', aid, a);
+}
+
+/* ---------------- sheets ---------------- */
+function openSheet({title, html, mount}){
+  const root = $('#sheet-root');
+  root.innerHTML = `<div class="sheet-bg" id="sheet-bg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-h"><h2 id="sheet-title" tabindex="-1">${esc(title)}</h2><button type="button" class="btn btn-sm" id="sheet-close">${t('close')}</button></div>
+    <div class="sheet-b">${html}</div></div></div>`;
+  $('#sheet-bg').addEventListener('click', e => { if(e.target.id === 'sheet-bg') closeSheet(); });
+  $('#sheet-close').addEventListener('click', closeSheet);
+  document.body.style.overflow = 'hidden'; S.sheetOpen = true;
+  const el = $('.sheet', root);
+  if(mount) mount(el);
+  setTimeout(() => { const h = $('#sheet-title'); h && h.focus({preventScroll:true}); }, 30);
+}
+function closeSheet(){ $('#sheet-root').innerHTML = ''; document.body.style.overflow = ''; S.sheetOpen = false; }
+
+function confirmSheet({title, body, yes, no, danger, onYes}){
+  openSheet({title, html:`<p style="margin:0">${esc(body)}</p><div class="btn-row"><button class="btn ${danger ? 'btn-danger-solid' : 'btn-primary'} btn-lg" id="c-yes">${esc(yes)}</button><button class="btn btn-lg" id="c-no">${esc(no || t('cancel'))}</button></div>`, mount(el){
+    $('#c-yes', el).addEventListener('click', () => { closeSheet(); onYes(); });
+    $('#c-no', el).addEventListener('click', closeSheet);
+  }});
+}
+
+function pickAnimal({title, candidates, selected, noneLabel, onPick, empty}){
+  const rowHTML = x => `<button type="button" class="prow ${x.id === selected ? 'on' : ''}" data-pick="${esc(x.id)}">${thumbHTML(x,'sm')}<span class="node-b">${tagHTML(x,'tag-sm')}<span class="meta">${esc([aName(x), sexWord(x.sex), ageText(x.birthDate)].filter(Boolean).join(' · '))}${!isActive(x) ? esc(t('pastDot')) : ''}</span></span>${x.id === selected ? `<span class="chip c-green"><i></i>${t('chosen')}</span>` : '<span></span>'}</button>`;
+  const draw = q => { q = q.trim().toLowerCase(); const list = candidates.filter(x => !q || String(x.tag).toLowerCase().includes(q) || String(x.name || '').toLowerCase().includes(q) || aName(x).toLowerCase().includes(q)); return list.length ? list.map(rowHTML).join('') : `<p class="empty-note">${esc(q ? t('noMatchId') : empty)}</p>`; };
+  openSheet({title, html:`
+    <div class="searchbox">${ico('search')}<label for="pk-q" class="sr-only">${t('searchLbl')}</label><input id="pk-q" class="input" type="search" dir="auto" placeholder="${esc(t('searchPh'))}" autocomplete="off"></div>
+    ${noneLabel ? `<button type="button" class="btn btn-block" data-pick="">${esc(noneLabel)}</button>` : ''}
+    <div class="plist" id="pk-list">${draw('')}</div>`, mount(el){
+    $('#pk-q', el).addEventListener('input', e => { $('#pk-list', el).innerHTML = draw(e.target.value); });
+    el.addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if(!b) return; closeSheet(); onPick(b.dataset.pick || ''); });
+  }});
+}
+function parentCandidates(childId, spId, sex){
+  const block = childId ? descendants(childId) : new Set();
+  if(childId) block.add(childId);
+  return A().filter(x => x.speciesId === spId && !block.has(x.id) && (x.sex === sex || x.sex === 'U' || !x.sex)).sort(byTag);
+}
+
+function sheetAddStatus(aid){
+  const a = animal(aid); if(!a) return;
+  const have = new Set((a.statuses || []).map(s => s.statusId));
+  const sts = sortedStatuses();
+  const g = Number(species(a.speciesId)?.gestationDays) || 0;
+  const pregRole = roleStatus('pregnant');
+  openSheet({title:t('addStatusTitle', {x:a.tag}), html:`
+    <fieldset class="field"><legend class="lbl">${t('chooseStatus')}</legend><div class="opts opts-col">
+      ${sts.map(st => `<label class="opt"><input type="radio" name="st" value="${esc(st.id)}" ${have.has(st.id) ? 'disabled' : ''}><span><span class="dot c-${esc(st.color)}"></span>${esc(stLabel(st))}${have.has(st.id) ? ` <span class="meta">${t('alreadySet')}</span>` : ''}</span></label>`).join('')}
+    </div></fieldset>
+    <p class="hint" id="st-help" hidden></p>
+    <div class="field"><label class="lbl" for="st-date" id="st-date-l">${t('date')}</label><input type="date" id="st-date" class="input" value="${todayISO()}" max="${todayISO()}"></div>
+    <div class="field"><label class="lbl" for="st-note">${t('note')} <span class="req">${t('optional')}</span></label><textarea id="st-note" class="input" dir="auto" placeholder="${esc(t('statusNotePh'))}"></textarea></div>
+    <div class="err" id="st-err" hidden>${t('chooseStatusFirst')}</div>
+    <button type="button" class="btn btn-primary btn-block btn-lg" id="st-save">${t('saveStatus')}</button>
+    <button type="button" class="link" data-go="status/new">${t('newKindStatus')}</button>`, mount(el){
+    el.addEventListener('change', e => {
+      if(e.target.name !== 'st') return;
+      const st = statusDef(e.target.value), help = $('#st-help', el); let h = '';
+      if(st.leavesHerd) h = t('helpLeaves', {x:a.tag});
+      else if(st.role === 'pregnant') h = g ? t('helpPreg', {g:AR() ? countUnit(g,'day') : g}) : t('helpPregNoLen');
+      else if(st.role === 'birth') h = t('helpBirth', {p:pregRole ? stLabel(pregRole) : ''});
+      help.textContent = h; help.hidden = !h;
+      $('#st-date-l', el).textContent = st.role === 'pregnant' ? t('dateBred') : t('date');
+    });
+    $('#st-save', el).addEventListener('click', () => {
+      const pick = el.querySelector('input[name="st"]:checked');
+      if(!pick){ $('#st-err', el).hidden = false; return; }
+      const date = $('#st-date', el).value || todayISO();
+      applyStatus(aid, pick.value, date, $('#st-note', el).value.trim());
+      closeSheet(); toast(t('statusAdded', {s:stLabel(statusDef(pick.value)), x:a.tag}));
+    });
+  }});
+}
+function sheetRemoveStatus(aid, stId){
+  const a = animal(aid), st = statusDef(stId); if(!a) return;
+  const s = stLabel(st);
+  openSheet({title:t('removeStatusQ', {s}), html:`
+    <p style="margin:0">${esc(t('removeStatusBody', {s, x:label(a)}))}</p>
+    <div class="field"><label class="lbl" for="rs-date">${t('date')}</label><input type="date" id="rs-date" class="input" value="${todayISO()}" max="${todayISO()}"></div>
+    <div class="field"><label class="lbl" for="rs-note">${t('note')} <span class="req">${t('optional')}</span></label><input id="rs-note" class="input" dir="auto" placeholder="${esc(t('recoveredPh'))}"></div>
+    <div class="btn-row"><button class="btn btn-primary btn-lg" id="rs-yes">${t('removeStatusBtn')}</button><button class="btn btn-lg" id="rs-no">${t('cancel')}</button></div>`, mount(el){
+    $('#rs-yes', el).addEventListener('click', () => { dropStatus(aid, stId, $('#rs-date', el).value || todayISO(), $('#rs-note', el).value.trim()); closeSheet(); toast(t('statusRemoved', {s})); });
+    $('#rs-no', el).addEventListener('click', closeSheet);
+  }});
+}
+function sheetVax(aid, ruleId){
+  const a = animal(aid); if(!a) return;
+  const rules = rulesFor(a), td = todayISO();
+  const opts = rules.map(r => { const n = nextDue(a, r); const info = n.done ? t('allDosesShort') : (n.never && diffDays(td, n.due) < -30 ? t('noRecordYet') : relDays(diffDays(td, n.due))); return `<label class="opt"><input type="radio" name="vx" value="${esc(r.id)}" ${r.id === ruleId ? 'checked' : ''}><span>${esc(ruleLabel(r))} <span class="meta">· ${esc(info)}</span></span></label>`; }).join('');
+  openSheet({title:t('recordVaxTitle', {x:a.tag}), html:`
+    <fieldset class="field"><legend class="lbl">${t('whichVax')}</legend><div class="opts opts-col">${opts}
+      <label class="opt"><input type="radio" name="vx" value="__other" ${!rules.length ? 'checked' : ''}><span>${t('otherVax')}</span></label></div></fieldset>
+    <div class="field" id="vx-other-f" ${rules.length ? 'hidden' : ''}><label class="lbl" for="vx-other">${t('otherVaxName')}</label><input id="vx-other" class="input" dir="auto" autocomplete="off" placeholder="${esc(t('otherVaxPh'))}"></div>
+    <div class="field"><label class="lbl" for="vx-date">${t('dateGiven')}</label><input type="date" id="vx-date" class="input" value="${td}" max="${td}"></div>
+    <fieldset class="field" id="vx-course-f" hidden><legend class="lbl">${t('whichDose')}</legend><div class="opts opts-col">
+      <label class="opt"><input type="radio" name="course" value="first"><span>${t('firstEver')} <span class="meta">${t('firstEverHint')}</span></span></label>
+      <label class="opt"><input type="radio" name="course" value="repeat"><span>${t('hadCourse')} <span class="meta">${t('hadCourseHint')}</span></span></label>
+    </div></fieldset>
+    <div class="field"><label class="lbl" for="vx-note">${t('note')} <span class="req">${t('optional')}</span></label><input id="vx-note" class="input" dir="auto" placeholder="${esc(t('vaxNotePh'))}"></div>
+    <div class="err" id="vx-err" hidden></div>
+    <button type="button" class="btn btn-primary btn-block btn-lg" id="vx-save">${t('saveVax')}</button>`, mount(el){
+    let courseTouched = false;
+    const needCourse = () => { const pick = el.querySelector('input[name="vx"]:checked'); const r = pick && Store.data.vaccines.get(pick.value); return r && r.booster && r.booster.n && !(a.vaccinations || []).some(v => v.ruleId === r.id) ? r : null; };
+    const updCourse = () => {
+      const r = needCourse(), f = $('#vx-course-f', el); f.hidden = !r;
+      if(!r || courseTouched) return;
+      const date = $('#vx-date', el).value || td;
+      const young = a.birthDate && diffDays(addPeriod(a.birthDate, r.first), date) <= 90;
+      el.querySelector(`input[name="course"][value="${young ? 'first' : 'repeat'}"]`).checked = true;
+    };
+    el.addEventListener('change', e => {
+      if(e.target.name === 'vx') $('#vx-other-f', el).hidden = e.target.value !== '__other';
+      if(e.target.name === 'course') courseTouched = true;
+      if(e.target.name === 'vx' || e.target.id === 'vx-date') updCourse();
+    });
+    updCourse();
+    $('#vx-save', el).addEventListener('click', () => {
+      const pick = el.querySelector('input[name="vx"]:checked'), err = $('#vx-err', el);
+      if(!pick){ err.textContent = t('chooseVaxFirst'); err.hidden = false; return; }
+      let name, rid = null, shown;
+      if(pick.value === '__other'){ name = $('#vx-other', el).value.trim(); shown = name; if(!name){ err.textContent = t('typeVaxName'); err.hidden = false; return; } }
+      else { const r = Store.data.vaccines.get(pick.value); name = r.name; rid = r.id; shown = ruleLabel(r); }
+      const rec = {id:uid('v'), ruleId:rid, name, date:$('#vx-date', el).value || td, note:$('#vx-note', el).value.trim()};
+      if(needCourse()){ const c = el.querySelector('input[name="course"]:checked'); rec.course = c ? c.value : 'first'; }
+      const x = clone(animal(aid));
+      x.vaccinations = x.vaccinations || [];
+      x.vaccinations.push(rec);
+      Store.put('animals', aid, x);
+      closeSheet(); toast(t('vaxRecorded', {s:shown, x:a.tag}));
+    });
+  }});
+}
+function viewPhoto(aid){
+  const a = animal(aid); if(!a) return;
+  const root = $('#viewer-root');
+  root.innerHTML = `<div class="viewer" role="dialog" aria-modal="true" aria-label="${esc(t('photoOf', {x:label(a)}))}"><div class="viewer-bar">${tagHTML(a)}<button class="btn btn-sm" id="v-close">${t('close')}</button></div><img id="v-img" src="${safeImg(a.thumb)}" alt="${esc(t('photoOf', {x:label(a)}))}"></div>`;
+  $('#v-close').addEventListener('click', () => { root.innerHTML = ''; });
+  Store.getPhoto(aid).then(src => { const img = $('#v-img'); if(src && img) img.src = src; });
+}
+
+/* ---- vaccines screen ---- */
+SCREENS.vaccines = r => {
+  r.tab = r.tab || 'due';
+  const tabs = [['due','vDue'],['history','vGiven'],['rules','vRules']];
+  let body = '';
+  if(r.tab === 'due'){
+    const due = allDue();
+    const late = due.filter(d => d.days < 0), soon = due.filter(d => d.days >= 0 && d.days <= 14), next = due.filter(d => d.days > 14 && d.days <= 60);
+    const grp = (title, cls, list) => list.length ? `<p class="group-h"><span class="dot c-${cls}"></span>${title} (${list.length})</p><div class="vlist">${list.map(vaxRow).join('')}</div>` : '';
+    body = !Store.data.vaccines.size ? `<p class="empty-note">${t('noRulesYet')}</p><button class="btn btn-primary" data-go="rule/new">${ico('plus')}${t('addVaxRule')}</button>`
+      : (late.length + soon.length + next.length) ? grp(t('gLate'), 'red', late) + grp(t('gSoon'), 'amber', soon) + grp(t('gNext'), 'green', next)
+      : `<p class="empty-note">${t('allUpToDate')}</p>`;
+  } else if(r.tab === 'history'){
+    const recs = [];
+    A().forEach(a => (a.vaccinations || []).forEach(v => recs.push({a, v})));
+    recs.sort((x,y) => (y.v.date || '').localeCompare(x.v.date || ''));
+    body = recs.length ? `<ul class="timeline">${recs.slice(0,150).map(({a, v}) => `<li><span class="t-date">${esc(fmtDate(v.date))}</span><span class="t-body"><span><button class="btn-inline" style="min-height:auto" data-go="animal/${esc(a.id)}/vaccines">${tagHTML(a,'tag-sm')}</button> ${a.name ? esc(aName(a)) : ''}</span><b dir="auto">${esc(vxName(v))}</b>${v.note ? `<span class="t-note" dir="auto">${esc(tx(v.note))}</span>` : ''}</span><span></span></li>`).join('')}</ul>${recs.length > 150 ? `<p class="hint">${t('latest150')}</p>` : ''}` : `<p class="empty-note">${t('noVaxYet')}</p>`;
+  } else {
+    const rules = [...Store.data.vaccines.values()];
+    body = `<p class="hint" style="margin:0">${t('rulesIntro')}</p>
+      <button class="btn btn-primary btn-block" data-go="rule/new">${ico('plus')}${t('addVaxRule')}</button>
+      ${sortedSpecies().map(sp => { const list = rules.filter(x => x.speciesId === sp.id).sort((a,b) => ruleLabel(a).localeCompare(ruleLabel(b))); return `<p class="group-h">${esc(spLabel(sp))}</p>${list.length ? `<div class="vlist">${list.map(x => `<button class="rule-card" data-go="rule/${esc(x.id)}"><span class="rule-top"><b>${esc(ruleLabel(x))}</b>${x.example ? `<span class="past-l">${t('exampleL')}</span>` : ''}</span><p class="meta">${esc(ruleText(x))}</p></button>`).join('')}</div>` : `<p class="empty-note">${esc(t('noRulesForType', {plural:spPlural(sp)}))} <button class="link" data-go="rule/new/${esc(sp.id)}">${t('addOne')}</button></p>`}`; }).join('')}`;
+  }
+  const html = `<div class="subtabs" role="tablist" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:0">${tabs.map(([k,l]) => `<button class="subtab" role="tab" data-act="vtab" data-v="${k}" aria-selected="${r.tab === k}">${t(l)}</button>`).join('')}</div><div class="panel" role="tabpanel">${body}</div>`;
+  return {title:t('vaxTitle'), html};
+};
+
+/* ---- rule form ---- */
+SCREENS.rule = r => {
+  const x = r.id ? Store.data.vaccines.get(r.id) : null;
+  if(r.id && !x) return {title:t('notFound'), html:`<p class="empty-note">${t('ruleGone')}</p>`};
+  if(!r.draft){
+    const p = (v, dn, du) => v && v.n ? {n:String(v.n), u:v.u} : {n:dn, u:du};
+    r.draft = x ? {name:ruleLabel(x), speciesId:x.speciesId, sex:x.sex || 'all', first:p(x.first,'0','weeks'), booster:p(x.booster,'','weeks'), repeat:p(x.repeat,'','months'), notes:x.example && x.notes === EX_NOTE ? '' : (x.notes || '')}
+      : {name:'', speciesId:(r.preset && r.preset.speciesId) || '', sex:'all', first:{n:'8',u:'weeks'}, booster:{n:'',u:'weeks'}, repeat:{n:'12',u:'months'}, notes:''};
+  }
+  const d = r.draft;
+  const unitSel = key => `<div class="unit-row"><label class="sr-only" for="ru-${key}-n">${t('number')}</label><input id="ru-${key}-n" data-k="${key}" data-p="n" class="input" inputmode="numeric" pattern="[0-9]*" value="${esc(d[key].n)}" placeholder="—"><label class="sr-only" for="ru-${key}-u">${t('unit')}</label><select id="ru-${key}-u" data-k="${key}" data-p="u" class="input">${UNITS.map(k => `<option value="${k}" ${d[key].u === k ? 'selected' : ''}>${t('unit_' + k)}</option>`).join('')}</select></div>`;
+  const toRule = () => ({name:d.name, sex:d.sex, first:{n:Number(d.first.n)||0, u:d.first.u}, booster:Number(d.booster.n) ? {n:Number(d.booster.n), u:d.booster.u} : null, repeat:Number(d.repeat.n) ? {n:Number(d.repeat.n), u:d.repeat.u} : null});
+  const html = `<form id="rform" class="form" novalidate>
+    <div class="err" id="r-err" hidden></div>
+    <div class="field"><label class="lbl" for="r-name">${t('vaxName')} <span class="req">${t('required')}</span></label><input id="r-name" name="name" class="input" dir="auto" value="${esc(d.name)}" autocomplete="off" placeholder="${esc(t('vaxNamePh'))}"></div>
+    <fieldset class="field"><legend class="lbl">${t('forWhich')} <span class="req">${t('required')}</span></legend><div class="opts">${sortedSpecies().map(sp => `<label class="opt"><input type="radio" name="speciesId" value="${esc(sp.id)}" ${d.speciesId === sp.id ? 'checked' : ''}><span>${esc(spLabel(sp))}</span></label>`).join('')}</div></fieldset>
+    <fieldset class="field"><legend class="lbl">${t('giveTo')}</legend><div class="opts">${[['all','all'],['F','femalesOnly'],['M','malesOnly']].map(([v,l]) => `<label class="opt"><input type="radio" name="sex" value="${v}" ${d.sex === v ? 'checked' : ''}><span>${t(l)}</span></label>`).join('')}</div></fieldset>
+    <div class="field"><span class="lbl">${t('firstAge')}</span>${unitSel('first')}<span class="hint">${t('firstAgeHint')}</span></div>
+    <div class="field"><span class="lbl">${t('secondDose')} <span class="req">${t('optional')}</span></span>${unitSel('booster')}<span class="hint">${t('secondHint')}</span></div>
+    <div class="field"><span class="lbl">${t('repeatEvery')} <span class="req">${t('optional')}</span></span>${unitSel('repeat')}<span class="hint">${t('repeatHint')}</span></div>
+    <p class="preview-line" id="r-prev" aria-live="polite"></p>
+    <div class="field"><label class="lbl" for="r-notes">${t('rNotes')} <span class="req">${t('optional')}</span></label><textarea id="r-notes" name="notes" class="input" dir="auto" placeholder="${esc(t('ruleNotesPh'))}">${esc(d.notes)}</textarea></div>
+    <button type="submit" class="btn btn-primary btn-block btn-lg">${x ? t('saveChanges') : t('saveRule')}</button>
+    ${x ? `<button type="button" class="btn btn-danger btn-block" data-act="deleteRule" data-id="${esc(x.id)}">${ico('trash')}${t('deleteRule')}</button>` : ''}
+  </form>`;
+  return {title: x ? t('editRule') : t('newRule'), html, mount(){
+    const f = $('#rform');
+    const prev = () => { $('#r-prev').textContent = t('planPrefix') + ruleText(toRule()); };
+    const onF = e => { const el = e.target; r.dirty = true; if(el.dataset.k){ d[el.dataset.k][el.dataset.p] = el.dataset.p === 'n' ? el.value.replace(/[^0-9]/g,'') : el.value; } else if(el.name){ if(el.type === 'radio'){ if(el.checked) d[el.name] = el.value; } else d[el.name] = el.value; } prev(); };
+    f.addEventListener('input', onF); f.addEventListener('change', onF); prev();
+    f.addEventListener('submit', e => {
+      e.preventDefault();
+      const errs = [];
+      if(!d.name.trim()) errs.push(t('enterVaxName'));
+      if(!species(d.speciesId)) errs.push(t('chooseWhich'));
+      if(errs.length){ const b = $('#r-err'); b.innerHTML = `${esc(t('fixPlain'))}<ul>${errs.map(m => `<li>${esc(m)}</li>`).join('')}</ul>`; b.hidden = false; b.scrollIntoView({block:'center'}); return; }
+      const rid = r.id || uid('r');
+      const out = Object.assign(toRule(), {name:unTr('vaccines', rid, 'name', d.name.trim()), speciesId:d.speciesId, notes:d.notes.trim(), example:false});
+      Store.put('vaccines', rid, out);
+      r.dirty = false; toast(t('ruleSaved')); back(true);
+    });
+  }};
+};
+
+/* ---- setup ---- */
+SCREENS.setup = () => {
+  const size = document.documentElement.dataset.size || 'm';
+  const samples = A().filter(a => a.sample).length;
+  const lb = Store.meta.lastBackup;
+  const html = `
+    <section class="sec" style="margin-top:0"><div class="sec-h"><h2>${t('language')}</h2></div>
+      <div class="langs">
+        <button class="btn" data-act="lang" data-v="en" lang="en" aria-pressed="${!AR()}">English</button>
+        <button class="btn lang-btn" data-act="lang" data-v="ar" lang="ar" aria-pressed="${AR()}">العربية</button>
+      </div>
+    </section>
+    <section class="sec"><div class="sec-h"><h2>${t('textSize')}</h2></div>
+      <div class="sizes">${[['m','sizeM','1rem'],['l','sizeL','1.15rem'],['xl','sizeXL','1.3rem']].map(([k,l,fs]) => `<button class="btn" data-act="size" data-v="${k}" aria-pressed="${size === k}"><span style="font-size:${fs};font-family:var(--display)">${t('sizeSample')}</span>${t(l)}</button>`).join('')}</div>
+    </section>
+    <section class="sec"><div class="sec-h"><h2>${t('installH')}</h2></div>
+      ${isStandalone() ? `<p style="margin:0">${t('installedNote')}</p>` : installSteps(true)}
+    </section>
+    <section class="sec"><div class="sec-h"><h2>${t('backupH')}</h2></div>
+      <p style="margin:0">${t('backupIntro')}</p>
+      <p class="meta" style="margin:0">${lb ? esc(t('lastBackup', {d:fmtDate(lb)})) : t('lastBackupNever')}</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" data-act="saveBackup">${ico('download')}${t('saveBackup')}</button>
+        <label class="btn" for="restore-file">${t('restoreBackup')}</label>
+      </div>
+      <input type="file" id="restore-file" class="sr-only">
+    </section>
+    <section class="sec"><div class="sec-h"><h2>${t('types')}</h2></div>
+      <div class="setlist">${sortedSpecies().map(sp => { const n = A().filter(a => a.speciesId === sp.id).length; return `<button class="setrow" data-go="type/${esc(sp.id)}"><span class="setrow-b"><b>${esc(spLabel(sp))}</b><span class="meta">${esc(t('typeMeta', {y:nm('species', sp, 'young') || '—', g:sp.gestationDays ? countUnit(Number(sp.gestationDays), 'day') : t('notSetF'), n:t('animalsN', {n})}))}</span></span>${ico('chev')}</button>`; }).join('') || `<p class="empty-note" style="border:0">${t('noTypes')}</p>`}</div>
+      <button class="btn btn-block" data-go="type/new">${ico('plus')}${t('addType')}</button>
+    </section>
+    <section class="sec"><div class="sec-h"><h2>${t('statusesH')}</h2></div>
+      <div class="setlist">${sortedStatuses().map(st => `<button class="setrow" data-go="status/${esc(st.id)}"><span class="setrow-b"><span class="chips">${chip(st.color, stLabel(st))}</span><span class="meta">${[st.attention ? t('showsAttn') : '', st.leavesHerd ? t('movesPast') : '', st.role ? t('builtIn') : ''].filter(Boolean).map(esc).join(' · ') || t('customStatus')}</span></span>${ico('chev')}</button>`).join('')}</div>
+      <button class="btn btn-block" data-go="status/new">${ico('plus')}${t('addStatusBtn')}</button>
+    </section>
+    <section class="sec"><div class="sec-h"><h2>${t('vaxRules')}</h2></div>
+      <button class="btn btn-block" data-go="vaccines/rules">${esc(t('manageRules', {n:Store.data.vaccines.size}))}</button>
+    </section>
+    <section class="sec"><div class="sec-h"><h2>${t('exampleAnimals')}</h2></div>
+      ${samples ? `<p style="margin:0">${esc(t('sampleSetup', {n:samples}))}</p><button class="btn btn-danger btn-block" data-act="clearSamples">${ico('trash')}${t('removeSamples')}</button>`
+        : `<p style="margin:0">${esc(t('loadSamplesHint', {n:Object.keys(SAMPLE_ANIMALS).length}))}</p><button class="btn btn-block" data-act="loadSamples">${t('loadSamples')}</button>`}
+    </section>
+    <section class="sec"><div class="sec-h"><h2>${t('yourRecords')}</h2></div>
+      <p style="margin:0">${t('deviceNote')} ${esc(t('onRecord', {n:A().length}))}</p>
+      <div class="btn-row"><button class="btn" data-act="exportCsv">${ico('download')}${t('herdCsv')}</button></div>
+      <p class="fine">${t('vetNote')}</p>
+    </section>`;
+  return {title:t('setupTitle'), html, mount(){
+    $('#restore-file').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if(f) restoreFrom(f); });
+  }};
+};
+
+SCREENS.type = r => {
+  const x = r.id ? species(r.id) : null;
+  if(r.id && !x) return {title:t('notFound'), html:`<p class="empty-note">${t('typeGone')}</p>`};
+  if(!r.draft) r.draft = x ? {name:spLabel(x), young:nm('species', x, 'young'), gestationDays:String(x.gestationDays || '')} : {name:'', young:'', gestationDays:''};
+  const d = r.draft, n = x ? A().filter(a => a.speciesId === x.id).length : 0;
+  const html = `<form id="tform" class="form" novalidate>
+    <div class="err" id="t-err" hidden></div>
+    <div class="field"><label class="lbl" for="t-name">${t('rName')} <span class="req">${t('required')}</span></label><input id="t-name" name="name" class="input" dir="auto" value="${esc(d.name)}" placeholder="${esc(t('typeNamePh'))}" autocomplete="off"></div>
+    <div class="field"><label class="lbl" for="t-young">${t('youngQ')}</label><input id="t-young" name="young" class="input" dir="auto" value="${esc(d.young)}" placeholder="${esc(t('youngPh'))}" autocomplete="off"><span class="hint">${t('youngHint')}</span></div>
+    <div class="field"><label class="lbl" for="t-g">${t('gestation')}</label><input id="t-g" name="gestationDays" class="input" inputmode="numeric" pattern="[0-9]*" value="${esc(d.gestationDays)}" placeholder="${esc(t('gestationPh'))}"><span class="hint">${t('gestationHint')}</span></div>
+    <button type="submit" class="btn btn-primary btn-block btn-lg">${x ? t('saveChanges') : t('saveType')}</button>
+    ${x ? (n ? `<p class="hint">${esc(t('cantDeleteType', {n}))}</p>` : `<button type="button" class="btn btn-danger btn-block" data-act="deleteType" data-id="${esc(x.id)}">${ico('trash')}${t('deleteType')}</button>`) : ''}
+  </form>`;
+  return {title: x ? t('editX', {x:spLabel(x)}) : t('newType'), html, mount(){
+    const f = $('#tform');
+    f.addEventListener('input', e => { if(e.target.name){ d[e.target.name] = e.target.value; r.dirty = true; } });
+    f.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = d.name.trim();
+      const dup = sortedSpecies().find(s => s.id !== r.id && (s.name.toLowerCase() === name.toLowerCase() || spLabel(s).toLowerCase() === name.toLowerCase()));
+      if(!name || dup){ const b = $('#t-err'); b.textContent = !name ? t('enterTypeName') : t('exists', {s:name}); b.hidden = false; return; }
+      const tid = r.id || uid('t');
+      const out = Object.assign(x ? clone(x) : {order:Store.data.species.size + 1}, {name:unTr('species', tid, 'name', name), young:unTr('species', tid, 'young', d.young.trim()), gestationDays:Number(String(d.gestationDays).replace(/[^0-9]/g,'')) || 0});
+      Store.put('species', tid, out);
+      r.dirty = false; toast(t('typeSaved')); back(true);
+    });
+  }};
+};
+
+SCREENS.status = r => {
+  const x = r.id ? statusDef(r.id) : null;
+  if(r.id && !x) return {title:t('notFound'), html:`<p class="empty-note">${t('statusGone')}</p>`};
+  if(!r.draft) r.draft = x ? {name:stLabel(x), color:x.color || 'grey', attention:!!x.attention, leavesHerd:!!x.leavesHerd} : {name:'', color:'amber', attention:false, leavesHerd:false};
+  const d = r.draft;
+  const roleNote = x && x.role ? t({pregnant:'rolePreg', birth:'roleBirth', dead:'roleDead'}[x.role] || '') : '';
+  const inUse = x ? A().filter(a => (a.statuses || []).some(s => s.statusId === x.id)).length : 0;
+  const html = `<form id="sform" class="form" novalidate>
+    <div class="err" id="s-err" hidden></div>
+    ${roleNote ? `<p class="hint" style="margin:0">${roleNote}</p>` : ''}
+    <div class="field"><label class="lbl" for="s-name">${t('rName')} <span class="req">${t('required')}</span></label><input id="s-name" name="name" class="input" dir="auto" value="${esc(d.name)}" placeholder="${esc(t('statusNamePh'))}" autocomplete="off"></div>
+    <fieldset class="field"><legend class="lbl">${t('colour')}</legend><div class="opts swatches">${COLORS.map(k => `<label class="opt"><input type="radio" name="color" value="${k}" ${d.color === k ? 'checked' : ''}><span><span class="dot c-${k}"></span>${t('c_' + k)}</span></label>`).join('')}</div></fieldset>
+    <label class="check" for="s-att"><input type="checkbox" id="s-att" name="attention" ${d.attention ? 'checked' : ''}><span><b>${t('attnCheck')}</b><span class="hint">${t('attnCheckHint')}</span></span></label>
+    <label class="check" for="s-leave"><input type="checkbox" id="s-leave" name="leavesHerd" ${d.leavesHerd ? 'checked' : ''} ${x && x.role === 'dead' ? 'disabled' : ''}><span><b>${t('leavesCheck')}</b><span class="hint">${t('leavesCheckHint')}</span></span></label>
+    <button type="submit" class="btn btn-primary btn-block btn-lg">${x ? t('saveChanges') : t('saveStatus')}</button>
+    ${x && !x.role ? `<button type="button" class="btn btn-danger btn-block" data-act="deleteStatus" data-id="${esc(x.id)}" data-n="${inUse}">${ico('trash')}${t('deleteStatus')}</button>` : ''}
+  </form>`;
+  return {title: x ? t('editX', {x:stLabel(x)}) : t('newStatus'), html, mount(){
+    const f = $('#sform');
+    const on = e => { const el = e.target; if(!el.name) return; r.dirty = true; if(el.type === 'checkbox') d[el.name] = el.checked; else if(el.type === 'radio'){ if(el.checked) d[el.name] = el.value; } else d[el.name] = el.value; };
+    f.addEventListener('input', on); f.addEventListener('change', on);
+    f.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = d.name.trim();
+      const dup = sortedStatuses().find(s => s.id !== r.id && (s.name.toLowerCase() === name.toLowerCase() || stLabel(s).toLowerCase() === name.toLowerCase()));
+      if(!name || dup){ const b = $('#s-err'); b.textContent = !name ? t('enterStatusName') : t('exists', {s:name}); b.hidden = false; return; }
+      const sid = r.id || uid('s');
+      const out = Object.assign(x ? clone(x) : {order:Store.data.statuses.size + 1, role:''}, {name:unTr('statuses', sid, 'name', name), color:d.color, attention:!!d.attention, leavesHerd:x && x.role === 'dead' ? true : !!d.leavesHerd});
+      Store.put('statuses', sid, out);
+      r.dirty = false; toast(t('statusSaved')); back(true);
+    });
+  }};
+};
+
+/* ---------------- actions ---------------- */
+const ACT = {
+  back: () => back(),
+  lang: ds => { setLang(ds.v); render(); },
+  addNew: () => guardLeave(() => go({s:'form'})),
+  filterAnimals: ds => go({s:'animals', st: ds.f === 'all' ? 'any' : ds.f}, {root:true}),
+  homeType: ds => { cur().type = ds.v; render(); },
+  animalsType: ds => { cur().type = ds.v; render(); },
+  atab: ds => { const r = cur(); r.tab = ds.v; const y = window.scrollY; render(); const st = $('#subtabs'); if(st){ const top = st.getBoundingClientRect().top + window.scrollY - 70; window.scrollTo(0, Math.min(y, Math.max(0, top))); } },
+  vtab: ds => { cur().tab = ds.v; render(); },
+  editAnimal: ds => go({s:'form', id:ds.id}),
+  viewPhoto: ds => viewPhoto(ds.id),
+  addStatus: ds => sheetAddStatus(ds.id),
+  removeStatus: ds => sheetRemoveStatus(ds.id, ds.st),
+  giveVax: ds => sheetVax(ds.id, ds.rule),
+  delVax: ds => {
+    const a = animal(ds.id); const v = a && (a.vaccinations || []).find(x => x.id === ds.v); if(!v) return;
+    confirmSheet({title:t('delVaxQ'), body:t('delVaxBody', {s:vxName(v), x:label(a), d:fmtDate(v.date)}), yes:t('delRecordBtn'), danger:true, onYes(){ const x = clone(a); x.vaccinations = x.vaccinations.filter(y => y.id !== ds.v); Store.put('animals', a.id, x); toast(t('recordDeleted')); }});
+  },
+  addOffspring: ds => {
+    const a = animal(ds.id); if(!a) return;
+    go({s:'form', preset:{speciesId:a.speciesId, damId:a.sex === 'F' ? a.id : '', sireId:a.sex === 'M' ? a.id : '', breed:a.breed || ''}});
+  },
+  linkDam: ds => linkParent(ds.id, 'F'),
+  linkSire: ds => linkParent(ds.id, 'M'),
+  linkChild: ds => {
+    const p = animal(ds.id); if(!p) return;
+    const key = p.sex === 'F' ? 'damId' : 'sireId';
+    const block = ancestors(p.id); block.add(p.id);
+    const cands = A().filter(x => x.speciesId === p.speciesId && !block.has(x.id) && x[key] !== p.id).sort(byTag);
+    pickAnimal({title:t('linkOffspringTo', {x:p.tag}), candidates:cands, empty:t('noOthers', {plural:spPlural(species(p.speciesId))}), onPick(id){
+      if(!id) return; const c = clone(animal(id)); const had = c[key]; c[key] = p.id; Store.put('animals', id, c);
+      toast(t('linkedOffspring', {x:c.tag, f:p.sex === 'F', r:!!had}));
+    }});
+  },
+  pickDam: () => formPickParent('F'),
+  pickSire: () => formPickParent('M'),
+  clearDam: () => { const r = cur(); r.draft.damId = ''; r.dirty = true; render(); },
+  clearSire: () => { const r = cur(); r.draft.sireId = ''; r.dirty = true; render(); },
+  birthToday: () => { const r = cur(); r.draft.birthDate = todayISO(); r.dirty = true; const el = $('#f-birth'); el.value = r.draft.birthDate; el.dispatchEvent(new Event('change', {bubbles:true})); },
+  dropPhoto: () => { const r = cur(); Object.assign(r.draft, {thumb:'', photoFull:null, photoChanged:true}); r.dirty = true; render(); },
+  deleteAnimal: ds => {
+    const a = animal(ds.id); if(!a) return;
+    const kids = children(a.id);
+    confirmSheet({title:t('delAnimalQ', {x:a.tag}), body:t('delAnimalBody', {x:label(a), k:kids.length}), yes:t('deleteForGood'), danger:true, onYes(){
+      kids.forEach(k => { const x = clone(k); if(x.damId === a.id) x.damId = ''; if(x.sireId === a.id) x.sireId = ''; Store.put('animals', k.id, x); });
+      Store.del('animals', a.id); if(a.hasPhoto) Store.removePhoto(a.id);
+      cur().dirty = false; S.stack = [{s:'animals'}]; render(); window.scrollTo(0,0); toast(t('xDeleted', {x:a.tag}));
+    }});
+  },
+  deleteRule: ds => {
+    const x = Store.data.vaccines.get(ds.id); if(!x) return;
+    confirmSheet({title:t('delRuleQ'), body:t('delRuleBody', {s:ruleLabel(x)}), yes:t('delRuleBtn'), danger:true, onYes(){ Store.del('vaccines', x.id); cur().dirty = false; back(true); toast(t('ruleDeleted')); }});
+  },
+  deleteType: ds => {
+    const x = species(ds.id); if(!x) return;
+    const rules = [...Store.data.vaccines.values()].filter(r => r.speciesId === x.id);
+    confirmSheet({title:t('delTypeQ', {s:spLabel(x)}), body: rules.length ? t('delTypeRules', {n:rules.length}) : t('delTypeNone'), yes:t('delTypeBtn'), danger:true, onYes(){ rules.forEach(r => Store.del('vaccines', r.id)); Store.del('species', x.id); cur().dirty = false; back(true); toast(t('typeDeleted')); }});
+  },
+  deleteStatus: ds => {
+    const x = statusDef(ds.id); if(!x) return; const n = Number(ds.n) || 0;
+    confirmSheet({title:t('delStatusQ', {s:stLabel(x)}), body: n ? t('delStatusSome', {n}) : t('delStatusNone'), yes:t('delStatusBtn'), danger:true, onYes(){
+      A().filter(a => (a.statuses || []).some(s => s.statusId === x.id)).forEach(a => dropStatus(a.id, x.id, todayISO(), t('statusDeletedNote')));
+      Store.del('statuses', x.id); cur().dirty = false; back(true); toast(t('statusDeleted'));
+    }});
+  },
+  clearSamples: () => {
+    const ex = A().filter(a => a.sample), ids = new Set(ex.map(a => a.id));
+    confirmSheet({title:t('removeSamplesQ'), body:t('removeSamplesBody', {n:ex.length}), yes:t('removeExamples'), danger:true, onYes(){
+      A().filter(a => !a.sample && (ids.has(a.damId) || ids.has(a.sireId))).forEach(a => { const x = clone(a); if(ids.has(x.damId)) x.damId = ''; if(ids.has(x.sireId)) x.sireId = ''; Store.put('animals', a.id, x); });
+      ex.forEach(a => { Store.del('animals', a.id); if(a.hasPhoto) Store.removePhoto(a.id); });
+      toast(t('samplesRemoved'));
+    }});
+  },
+  size: ds => { const v = ds.v === 'm' ? '' : ds.v; if(v) document.documentElement.dataset.size = v; else delete document.documentElement.dataset.size; try{ localStorage.setItem(LS_KEY + ':size', ds.v); }catch(e){} render(); },
+  exportCsv: () => exportFile(),
+  saveBackup: () => saveBackup(),
+  loadSamples: () => loadSamples(),
+  installApp: async () => { if(!installPrompt) return; installPrompt.prompt(); try{ await installPrompt.userChoice; }catch(e){} installPrompt = null; render(); },
+  dismissInstall: () => { try{ localStorage.setItem(LS_KEY + ':installDismissed', '1'); }catch(e){} render(); },
+  applyUpdate: () => { if(S.swReg && S.swReg.waiting) S.swReg.waiting.postMessage('skipWaiting'); else location.reload(); }
+};
+function linkParent(childId, sex){
+  const c = animal(childId); if(!c) return;
+  const isM = sex === 'F', key = isM ? 'damId' : 'sireId';
+  const sp = species(c.speciesId);
+  pickAnimal({title:t('chooseParentOf', {m:isM, x:c.tag}), candidates:parentCandidates(c.id, c.speciesId, sex), selected:c[key], empty:isM ? t('noFemales', {plural:spPlural(sp)}) : t('noMales', {plural:spPlural(sp)}), onPick(id){
+    if(!id) return; const x = clone(animal(childId)); x[key] = id; Store.put('animals', childId, x); toast(t('linkedAs', {x:animal(id).tag, m:isM}));
+  }});
+}
+function formPickParent(sex){
+  const r = cur(), d = r.draft;
+  if(!d.speciesId){ toast(t('chooseTypeFirst')); $('#f-species')?.scrollIntoView({block:'center'}); return; }
+  const isM = sex === 'F', key = isM ? 'damId' : 'sireId';
+  const sp = species(d.speciesId);
+  pickAnimal({title:isM ? t('chooseMother') : t('chooseFather'), candidates:parentCandidates(r.id, d.speciesId, sex), selected:d[key], noneLabel:d[key] ? (isM ? t('noMotherRec') : t('noFatherRec')) : '', empty:isM ? t('noFemales', {plural:spPlural(sp)}) : t('noMales', {plural:spPlural(sp)}), onPick(id){ d[key] = id; r.dirty = true; render(); }});
+}
+/* ---------------- device helpers: install, files, backup ---------------- */
+const UA = navigator.userAgent || '';
+const isIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/i.test(UA);
+const isPhone = isIOS || isAndroid;
+function isStandalone(){ try{ return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; } }
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if(Store.ready) render(); });
+window.addEventListener('appinstalled', () => { installPrompt = null; if(Store.ready) render(); });
+function installSteps(inSetup){
+  const steps = TX[isIOS ? 'iosSteps' : isAndroid ? 'androidSteps' : 'pcSteps'][AR() ? 1 : 0];
+  return `${inSetup ? `<p style="margin:0">${t('installWhy')}</p>` : ''}
+    ${installPrompt ? `<div><button class="btn btn-primary" data-act="installApp">${ico('download')}${t('installBtn')}</button></div>` : `<ol>${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>`}`;
+}
+function installCard(){
+  let dismissed = false;
+  try{ dismissed = localStorage.getItem(LS_KEY + ':installDismissed') === '1'; }catch(e){}
+  if(isStandalone() || dismissed || location.protocol === 'file:') return '';
+  return `<div class="notice"><h3>${esc(t('installTitle', {pc:!isPhone}))}</h3><p>${t('installWhy')}</p>${installSteps(false)}<div><button class="btn btn-sm" data-act="dismissInstall">${t('notNow')}</button></div></div>`;
+}
+function backupReminder(){
+  const own = A().filter(a => !a.sample).length;
+  if(!own || Store.mode !== 'device') return '';
+  const lb = Store.meta.lastBackup;
+  if(lb && diffDays(lb, todayISO()) < 30) return '';
+  const when = lb ? t('lastBackup', {d:fmtDate(lb)}) : t('lastBackupNever');
+  return `<div class="notice warn"><h3>${t('remindTitle')}</h3><p>${esc(t('remindBody', {when}))}</p><div><button class="btn btn-sm btn-primary" data-act="saveBackup">${ico('download')}${t('saveBackupNow')}</button></div></div>`;
+}
+async function saveFile(filename, data, mime){
+  const blob = new Blob([data], {type:mime});
+  let coarse = false; try{ coarse = matchMedia('(pointer:coarse)').matches; }catch(e){}
+  if(coarse && navigator.canShare && typeof File === 'function'){
+    try{
+      const file = new File([blob], filename, {type:mime});
+      if(navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:filename}); return 'shared'; }
+    }catch(e){ if(e && e.name === 'AbortError') return 'cancelled'; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  return 'downloaded';
+}
+async function saveBackup(){
+  const data = await Store.exportAll();
+  const res = await saveFile(`herd-book-backup-${todayISO()}.json`, JSON.stringify(data), 'application/json');
+  if(res === 'cancelled') return;
+  await Store.setMeta('lastBackup', todayISO());
+  toast(t('backupSaved')); render();
+}
+function restoreFrom(file){
+  const rd = new FileReader();
+  rd.onload = () => {
+    let b = null;
+    try{ b = JSON.parse(String(rd.result)); }catch(e){ b = null; }
+    if(!b || b.app !== 'Herd Book' || !b.animals){ toast(t('badBackup'), 5000); return; }
+    const count = Array.isArray(b.animals) ? b.animals.length : Object.keys(b.animals).length;
+    confirmSheet({title:t('restoreQ'), body:t('restoreBody', {d:fmtDate(String(b.exported || '').slice(0,10)), n:count, m:A().length}), yes:t('restoreYes'), danger:true, async onYes(){
+      const ok = await Store.importAll(b);
+      if(ok){ S.stack = [{s:'home'}]; render(); window.scrollTo(0,0); toast(t('restored')); }
+    }});
+  };
+  rd.onerror = () => toast(t('badBackup'), 5000);
+  rd.readAsText(file);
+}
+function loadSamples(){
+  const shift = diffDays(SAMPLE_DAY, todayISO());
+  const ops = [];
+  Object.entries(SAMPLE_ANIMALS).forEach(([id, d]) => { if(!Store.data.animals.has(id)) ops.push([id, shiftDates(d, shift)]); });
+  ops.forEach(([id, d]) => Store.put('animals', id, d));
+  toast(t('samplesLoaded'));
+  S.stack = [{s:'home'}]; render(); window.scrollTo(0,0);
+}
+async function exportFile(){
+  const q = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const head = TX.csvHead[AR() ? 1 : 0];
+  const rows = A().sort(byTag).map(a => {
+    const v = [...(a.vaccinations || [])].sort((x,y) => (y.date || '').localeCompare(x.date || ''))[0];
+    const nx = isActive(a) ? rulesFor(a).map(r => ({r, n:nextDue(a, r)})).filter(x => !x.n.done).sort((x,y) => x.n.due.localeCompare(y.n.due))[0] : null;
+    const kids = children(a.id);
+    return [a.tag, aName(a), spName(a), sexWord(a.sex), tx(a.breed), a.birthDate, ageText(a.birthDate), animal(a.damId)?.tag || '', animal(a.sireId)?.tag || '', (a.statuses || []).map(s => stLabel(statusDef(s.statusId))).join('; '), isActive(a) ? t('yes') : t('no'), kids.length, kids.map(k => k.tag).join(' '), v ? `${vxName(v)} (${v.date})` : '', nx ? `${ruleLabel(nx.r)} (${nx.n.due})` : '', tx(a.notes)].map(q).join(',');
+  });
+  const res = await saveFile(`herd-list-${todayISO()}.csv`, '﻿' + [head.join(','), ...rows].join('\r\n'), 'text/csv');
+  if(res !== 'cancelled') toast(t('fileSaved'));
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', e => {
+  const tab = e.target.closest('[data-tab]');
+  if(tab){ e.preventDefault(); tabGo(tab.dataset.tab); return; }
+  const el = e.target.closest('[data-go],[data-act]');
+  if(!el) return;
+  if(el.closest('#sheet-root') && !el.dataset.go) return;
+  if(el.dataset.go){ e.preventDefault(); if(el.closest('#sheet-root')) closeSheet(); const p = el.dataset.go; guardLeave(() => go(p)); return; }
+  const fn = ACT[el.dataset.act];
+  if(fn){ e.preventDefault(); fn(el.dataset, el); }
+});
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if($('#viewer-root').innerHTML){ $('#viewer-root').innerHTML = ''; return; }
+  if(S.sheetOpen) closeSheet();
+});
+
+/* ---------------- boot ---------------- */
+try{ const sz = localStorage.getItem(LS_KEY + ':size'); if(sz === 'l' || sz === 'xl') document.documentElement.dataset.size = sz; }catch(e){}
+let startLang = 'en';
+try{ const l = localStorage.getItem(LS_KEY + ':lang'); if(l === 'ar' || l === 'en') startLang = l; else if(/^ar\b/i.test(navigator.language || '')) startLang = 'ar'; }catch(e){ if(/^ar\b/i.test(navigator.language || '')) startLang = 'ar'; }
+setLang(startLang);
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    S.swReg = reg;
+    const offer = () => { if(reg.waiting && navigator.serviceWorker.controller) showBanner('updateReady', 'info', 'applyUpdate', 'updateNow'); };
+    offer();
+    reg.addEventListener('updatefound', () => { const w = reg.installing; if(w) w.addEventListener('statechange', () => { if(w.state === 'installed') offer(); }); });
+  }).catch(() => {});
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if(!hadController || reloading) return; reloading = true; location.reload(); });
+}
+try{ const h = (location.hash || '').slice(1); if(['animals','vaccines','setup'].includes(h)) S.stack = [{s:h}]; }catch(e){}
+render();
+Store.init();
+})();
+</script>
+</body>
+</html>
