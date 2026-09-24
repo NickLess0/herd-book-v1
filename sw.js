@@ -2,7 +2,7 @@
    Keeps a copy of the app on the device so it opens without internet.
    Your records are NOT stored here; they live in the device's own database.
    When you change any app file, raise the version number below so devices pick up the update. */
-const VERSION = 'herdbook-v1';
+const VERSION = 'herdbook-v2';
 const FILES = [
   './',
   './index.html',
