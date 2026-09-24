@@ -2,11 +2,13 @@
    Keeps a copy of the app on the device so it opens without internet.
    Your records are NOT stored here; they live in the device's own database.
    When you change any app file, raise the version number below so devices pick up the update. */
-const VERSION = 'herdbook-v1';
-const FILES = [
+const VERSION = 'herdbook-v2';
+const CORE = [
   './',
   './index.html',
-  './manifest.webmanifest',
+  './manifest.webmanifest'
+];
+const ICONS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/maskable-512.png',
@@ -15,7 +17,11 @@ const FILES = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(FILES)));
+  event.waitUntil((async () => {
+    const cache = await caches.open(VERSION);
+    await cache.addAll(CORE.map(u => new Request(u, { cache: 'reload' })));
+    await Promise.all(ICONS.map(u => cache.add(new Request(u, { cache: 'reload' })).catch(() => {})));
+  })());
 });
 
 self.addEventListener('activate', event => {
